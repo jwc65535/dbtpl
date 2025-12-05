@@ -886,8 +886,7 @@ func NewFuncs(ctx context.Context) (template.FuncMap, error) {
 		nth:        nth,
 		pkg:        Pkg(ctx),
 		tags:       Tags(ctx),
-		//imports:    Imports(ctx),
-		imports:    imports, // 
+		imports:    Imports(ctx),
 		conflict:   Conflict(ctx),
 		custom:     Custom(ctx),
 		escSchema:  Esc(ctx, "schema"),
