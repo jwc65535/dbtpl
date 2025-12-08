@@ -8,22 +8,23 @@ import (
 )
 
 func init() {
-	Symbols["github.com/xo/dbtpl/loader/loader"] = map[string]reflect.Value{
-		// function, constant and variable definitions
-		"EnumValues":           reflect.ValueOf(loader.EnumValues),
-		"Enums":                reflect.ValueOf(loader.Enums),
-		"Flags":                reflect.ValueOf(loader.Flags),
-		"IndexColumns":         reflect.ValueOf(loader.IndexColumns),
-		"MysqlEnumValues":      reflect.ValueOf(loader.MysqlEnumValues),
-		"MysqlGoType":          reflect.ValueOf(loader.MysqlGoType),
-		"NthParam":             reflect.ValueOf(loader.NthParam),
-		"OracleGoType":         reflect.ValueOf(loader.OracleGoType),
-		"PQPostgresGoType":     reflect.ValueOf(loader.PQPostgresGoType),
-		"PostgresFlags":        reflect.ValueOf(loader.PostgresFlags),
-		"PostgresGoType":       reflect.ValueOf(loader.PostgresGoType),
-		"PostgresIndexColumns": reflect.ValueOf(loader.PostgresIndexColumns),
-		"PostgresTableColumns": reflect.ValueOf(loader.PostgresTableColumns),
-		"PostgresViewStrip":    reflect.ValueOf(loader.PostgresViewStrip),
+Symbols["github.com/xo/dbtpl/loader/loader"] = map[string]reflect.Value{
+// function, constant and variable definitions
+"EnumValues":           reflect.ValueOf(loader.EnumValues),
+"Enums":                reflect.ValueOf(loader.Enums),
+"Flags":                reflect.ValueOf(loader.Flags),
+"IndexColumns":         reflect.ValueOf(loader.IndexColumns),
+"MysqlEnumValues":      reflect.ValueOf(loader.MysqlEnumValues),
+"MysqlGoType":          reflect.ValueOf(loader.MysqlGoType),
+"NthParam":             reflect.ValueOf(loader.NthParam),
+"OracleGoType":         reflect.ValueOf(loader.OracleGoType),
+"PQPostgresGoType":     reflect.ValueOf(loader.PQPostgresGoType),
+"PgxPostgresGoType":    reflect.ValueOf(loader.PgxPostgresGoType),
+"PostgresFlags":        reflect.ValueOf(loader.PostgresFlags),
+"PostgresGoType":       reflect.ValueOf(loader.PostgresGoType),
+"PostgresIndexColumns": reflect.ValueOf(loader.PostgresIndexColumns),
+"PostgresTableColumns": reflect.ValueOf(loader.PostgresTableColumns),
+"PostgresViewStrip":    reflect.ValueOf(loader.PostgresViewStrip),
 		"ProcParams":           reflect.ValueOf(loader.ProcParams),
 		"Procs":                reflect.ValueOf(loader.Procs),
 		"Register":             reflect.ValueOf(loader.Register),

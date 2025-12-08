@@ -192,7 +192,7 @@ Commands:
     Generate code for a database custom query from a template.
 
     -s, --schema=<name>            database schema name
-    -t, --template=go              template type (createdb, dot, go, json, yaml;
+    -t, --template=go              template type (createdb, dot, go, json, yaml, pgx;
                                    default: go)
     -f, --suffix=<ext>             file extension suffix for generated files
                                    (otherwise set by template type)
@@ -246,7 +246,7 @@ Commands:
     Generate code for a database schema from a template.
 
     -s, --schema=<name>            database schema name
-    -t, --template=go              template type (createdb, dot, go, json, yaml;
+    -t, --template=go              template type (createdb, dot, go, json, yaml, pgx;
                                    default: go)
     -f, --suffix=<ext>             file extension suffix for generated files
                                    (otherwise set by template type)
@@ -308,7 +308,7 @@ Commands:
   dump [<flags>] <out>
     Dump internal templates to path.
 
-    -t, --template=go   template type (createdb, dot, go, json, yaml; default:
+    -t, --template=go   template type (createdb, dot, go, json, yaml, pgx; default:
                         go)
     -f, --suffix=<ext>  file extension suffix for generated files (otherwise set
                         by template type)
