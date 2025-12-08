@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kenshaw/snaker"
 	"github.com/xo/dbtpl/models"
 	xo "github.com/xo/dbtpl/types"
 )
@@ -77,6 +78,112 @@ func PQPostgresGoType(d xo.Type, schema, itype, _ string) (string, string, error
 			goType, zero = arrType, "nil"
 		}
 	}
+	return goType, zero, nil
+}
+
+// PgxPostgresGoType maps postgres types to pgx-friendly Go types.
+func PgxPostgresGoType(d xo.Type, schema, itype, _ string) (string, string, error) {
+	if strings.HasPrefix(d.Type, "SETOF ") {
+		d.Type = d.Type[len("SETOF "):]
+		goType, _, err := PgxPostgresGoType(d, schema, itype, "")
+		if err != nil {
+			return "", "", err
+		}
+		return "[]" + goType, "nil", nil
+	}
+
+	if d.IsArray {
+		elem := d
+		elem.IsArray = false
+		elem.Nullable = false
+		goType, _, err := PgxPostgresGoType(elem, schema, itype, "")
+		if err != nil {
+			return "", "", err
+		}
+		return "[]" + goType, "nil", nil
+	}
+
+	typNullable := d.Nullable
+	typ := d.Type
+	switch {
+	case typ == `"char"`:
+		typ = "char"
+	case strings.HasPrefix(typ, "information_schema."):
+		switch strings.TrimPrefix(typ, "information_schema.") {
+		case "cardinal_number":
+			typ = "integer"
+		case "character_data", "sql_identifier", "yes_or_no":
+			typ = "character varying"
+		case "time_stamp":
+			typ = "timestamp with time zone"
+		}
+	}
+
+	var goType, zero string
+	switch strings.ToLower(typ) {
+	case "boolean", "bool":
+		goType, zero = "bool", "false"
+		if typNullable {
+			goType, zero = "pgtype.Bool", "pgtype.Bool{}"
+		}
+	case "smallint", "int2", "smallserial", "serial2", "oid":
+		goType, zero = "int16", "0"
+		if typNullable {
+			goType, zero = "pgtype.Int2", "pgtype.Int2{}"
+		}
+	case "integer", "int", "int4", "serial", "serial4":
+		goType, zero = "int32", "0"
+		if typNullable {
+			goType, zero = "pgtype.Int4", "pgtype.Int4{}"
+		}
+	case "bigint", "int8", "bigserial", "serial8":
+		goType, zero = "int64", "0"
+		if typNullable {
+			goType, zero = "pgtype.Int8", "pgtype.Int8{}"
+		}
+	case "real", "float4":
+		goType, zero = "float32", "0"
+	case "double precision", "float8":
+		goType, zero = "float64", "0"
+	case "numeric", "decimal":
+		goType, zero = "pgtype.Numeric", "pgtype.Numeric{}"
+	case "bpchar", "character varying", "character", "inet", "money", "text", "name", "varchar", "char":
+		goType, zero = "string", `""`
+		if typNullable {
+			goType, zero = "pgtype.Text", "pgtype.Text{}"
+		}
+	case "bytea":
+		goType, zero = "[]byte", "nil"
+	case "date":
+		goType, zero = "pgtype.Date", "pgtype.Date{}"
+	case "timestamp", "timestamp without time zone":
+		goType, zero = "pgtype.Timestamp", "pgtype.Timestamp{}"
+	case "timestamp with time zone", "timestamptz":
+		goType, zero = "pgtype.Timestamptz", "pgtype.Timestamptz{}"
+	case "time", "time without time zone":
+		goType, zero = "pgtype.Time", "pgtype.Time{}"
+	case "interval":
+		goType, zero = "pgtype.Interval", "pgtype.Interval{}"
+	case "uuid":
+		goType, zero = "pgtype.UUID", "pgtype.UUID{}"
+	case "json", "jsonb":
+		goType, zero = "[]byte", "nil"
+	case "void":
+		goType, zero = "any", "nil"
+	default:
+		if d.Enum != nil {
+			goType = snaker.ForceCamelIdentifier(d.Enum.Name)
+			zero = goType + "{}"
+			break
+		}
+		re := regexp.MustCompile(`^[^\.]+\.(.+)$`)
+		matches := re.FindStringSubmatch(typ)
+		if len(matches) == 2 {
+			return strings.Replace(matches[1], schema+".", "", 1), strings.Replace(matches[1], schema+".", "", 1) + "{}", nil
+		}
+		return "any", "nil", nil
+	}
+
 	return goType, zero, nil
 }
 
