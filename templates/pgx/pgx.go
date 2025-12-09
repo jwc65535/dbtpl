@@ -1343,7 +1343,9 @@ func (f *Funcs) logf_pkeys(v any) string {
 	p := []string{"sqlstr"}
 	switch x := v.(type) {
 	case Table:
-		p = append(p, f.names(f.short(x.GoName)+".", x.PrimaryKeys))
+		if names := f.names(f.short(x.GoName)+".", x.PrimaryKeys); names != "" {
+			p = append(p, names)
+		}
 	}
 	return fmt.Sprintf("logf(%s)", strings.Join(p, ", "))
 }
@@ -1369,7 +1371,9 @@ func (f *Funcs) logf(v any, ignore ...any) string {
 	// add fields
 	switch x := v.(type) {
 	case Table:
-		p = append(p, f.names_ignore(f.short(x.GoName)+".", x, ignoreNames...))
+		if names := f.names_ignore(f.short(x.GoName)+".", x, ignoreNames...); names != "" {
+			p = append(p, names)
+		}
 	default:
 		return fmt.Sprintf("[[ UNSUPPORTED TYPE 12: %T ]]", v)
 	}
@@ -1385,7 +1389,12 @@ func (f *Funcs) logf_update(v any) string {
 		for _, pk := range x.PrimaryKeys {
 			ignore = append(ignore, pk.GoName)
 		}
-		p = append(p, f.names_ignore(prefix, x, ignore...), f.names(prefix, x.PrimaryKeys))
+		if names := f.names_ignore(prefix, x, ignore...); names != "" {
+			p = append(p, names)
+		}
+		if names := f.names(prefix, x.PrimaryKeys); names != "" {
+			p = append(p, names)
+		}
 	default:
 		return fmt.Sprintf("[[ UNSUPPORTED TYPE 13: %T ]]", v)
 	}
