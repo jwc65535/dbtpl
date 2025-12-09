@@ -948,6 +948,7 @@ func (f *Funcs) FuncMap() template.FuncMap {
 		"params":       f.params,
 		"zero":         f.zero,
 		"type":         f.typefn,
+		"field_tag":    f.field_tag,
 		"field":        f.field,
 		"short":        f.short,
 		// sqlstr funcs
@@ -1951,6 +1952,20 @@ func (f *Funcs) typefn(typ string) string {
 		return prefix + typ
 	}
 	return prefix + f.custom + "." + typ
+}
+
+// field_tag renders the struct field tag using the configured template.
+func (f *Funcs) field_tag(field Field) (string, error) {
+	buf := new(bytes.Buffer)
+	if err := f.fieldtag.Funcs(f.FuncMap()).Execute(buf, field); err != nil {
+		return "", err
+	}
+
+	if s := strings.TrimSpace(buf.String()); s != "" {
+		return "`" + s + "`", nil
+	}
+
+	return "", nil
 }
 
 // field generates a field definition for a struct.
