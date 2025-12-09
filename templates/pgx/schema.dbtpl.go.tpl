@@ -71,11 +71,11 @@ func ({{ short $t.GoName }} *{{ $t.GoName }}) Exists() bool {
         {{ sqlstr "insert" $t }}
         {{ logf $t }}
         {{- if has_sequence $t }}
-        if err := {{ db "QueryRow" "insert" }}.Scan(&{{ short $t.GoName }}.{{ (seq_field $t).GoName }}); err != nil {
+        if err := {{ db_prefix "QueryRow" true $t }}.Scan(&{{ short $t.GoName }}.{{ (seq_field $t).GoName }}); err != nil {
                 return logerror(err)
         }
         {{- else }}
-        if _, err := {{ db "Exec" "insert" }}; err != nil {
+        if _, err := {{ db_prefix "Exec" true $t }}; err != nil {
                 return logerror(err)
         }
         {{- end }}
@@ -87,7 +87,7 @@ func ({{ short $t.GoName }} *{{ $t.GoName }}) Exists() bool {
 {{ recv_context $t "Update" }} {
         {{ sqlstr "update" $t }}
         {{ logf_update $t }}
-        if _, err := {{ db "Exec" "update" }}; err != nil {
+        if _, err := {{ db_update "Exec" $t }}; err != nil {
                 return logerror(err)
         }
         return nil
@@ -106,11 +106,11 @@ func ({{ short $t.GoName }} *{{ $t.GoName }}) Exists() bool {
         {{ sqlstr "upsert" $t }}
         {{ logf $t }}
         {{- if has_sequence $t }}
-        if err := {{ db "QueryRow" "upsert" }}.Scan(&{{ short $t.GoName }}.{{ (seq_field $t).GoName }}); err != nil {
+        if err := {{ db_prefix "QueryRow" true $t }}.Scan(&{{ short $t.GoName }}.{{ (seq_field $t).GoName }}); err != nil {
                 return logerror(err)
         }
         {{- else }}
-        if _, err := {{ db "Exec" "upsert" }}; err != nil {
+        if _, err := {{ db_prefix "Exec" true $t }}; err != nil {
                 return logerror(err)
         }
         {{- end }}
@@ -122,7 +122,7 @@ func ({{ short $t.GoName }} *{{ $t.GoName }}) Exists() bool {
 {{ recv_context $t "Delete" }} {
         {{ sqlstr "delete" $t }}
         {{ logf_pkeys $t }}
-        if _, err := {{ db "Exec" "delete" }}; err != nil {
+        if _, err := {{ db "Exec" (names (print (short $t.GoName) ".") $t.PrimaryKeys) }}; err != nil {
                 return logerror(err)
         }
         {{ short $t.GoName }}._exists = false
@@ -145,12 +145,12 @@ func ({{ short $t.GoName }} *{{ $t.GoName }}) Exists() bool {
                 _exists: true,
         {{- end }}
         }
-        if err := {{ db "QueryRow" "index" }}.Scan({{ names (print "&" (short $i.Table) ".") $i.Table }}); err != nil {
+        if err := {{ db "QueryRow" $i.Fields }}.Scan({{ names (print "&" (short $i.Table) ".") $i.Table }}); err != nil {
                 return nil, logerror(err)
         }
         return &{{ short $i.Table }}, nil
 {{- else }}
-        rows, err := {{ db "Query" "index" }}
+        rows, err := {{ db "Query" $i.Fields }}
         if err != nil {
                 return nil, logerror(err)
         }
