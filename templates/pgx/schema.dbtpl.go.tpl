@@ -69,7 +69,7 @@ func ({{ short $t.GoName }} *{{ $t.GoName }}) Exists() bool {
 // Insert inserts the row into the database.
 {{ recv_context $t "Insert" }} {
         {{ sqlstr "insert" $t }}
-        logf(sqlstr, {{ params $t.Fields true }})
+    logf(sqlstr, {{ params $t.Fields false }})
         {{- if has_sequence $t }}
         if err := {{ db "QueryRow" "insert" }}.Scan(&{{ short $t.GoName }}.{{ (seq_field $t).GoName }}); err != nil {
                 return logerror(err)
