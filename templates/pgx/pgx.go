@@ -1305,7 +1305,12 @@ func (f *Funcs) db_update(name string, v any) string {
 		for _, pk := range x.PrimaryKeys {
 			ignore = append(ignore, pk.GoName)
 		}
-		p = append(p, f.names_ignore(prefix, x, ignore...), f.names(prefix, x.PrimaryKeys))
+		if names := f.names_ignore(prefix, x, ignore...); names != "" {
+			p = append(p, names)
+		}
+		if names := f.names(prefix, x.PrimaryKeys); names != "" {
+			p = append(p, names)
+		}
 	default:
 		return fmt.Sprintf("[[ UNSUPPORTED TYPE 9: %T ]]", v)
 	}
