@@ -69,7 +69,7 @@ func ({{ short $t.GoName }} *{{ $t.GoName }}) Exists() bool {
 // Insert inserts the row into the database.
 {{ recv_context $t "Insert" }} {
         {{ sqlstr "insert" $t }}
-    logf(sqlstr, {{ params $t.Fields false }})
+        {{ logf $t }}
         {{- if has_sequence $t }}
         if err := {{ db "QueryRow" "insert" }}.Scan(&{{ short $t.GoName }}.{{ (seq_field $t).GoName }}); err != nil {
                 return logerror(err)
@@ -86,7 +86,7 @@ func ({{ short $t.GoName }} *{{ $t.GoName }}) Exists() bool {
 // Update updates the row in the database.
 {{ recv_context $t "Update" }} {
         {{ sqlstr "update" $t }}
-        logf(sqlstr, {{ params $t.Fields false }}, {{ params $t.PrimaryKeys false }})
+        {{ logf_update $t }}
         if _, err := {{ db "Exec" "update" }}; err != nil {
                 return logerror(err)
         }
@@ -104,7 +104,7 @@ func ({{ short $t.GoName }} *{{ $t.GoName }}) Exists() bool {
 // Upsert performs an INSERT ... ON CONFLICT DO UPDATE operation.
 {{ recv_context $t "Upsert" }} {
         {{ sqlstr "upsert" $t }}
-        logf(sqlstr, {{ params $t.Fields false }})
+        {{ logf $t }}
         {{- if has_sequence $t }}
         if err := {{ db "QueryRow" "upsert" }}.Scan(&{{ short $t.GoName }}.{{ (seq_field $t).GoName }}); err != nil {
                 return logerror(err)
@@ -121,7 +121,7 @@ func ({{ short $t.GoName }} *{{ $t.GoName }}) Exists() bool {
 // Delete deletes the row from the database.
 {{ recv_context $t "Delete" }} {
         {{ sqlstr "delete" $t }}
-        logf(sqlstr, {{ params $t.PrimaryKeys false }})
+        {{ logf_pkeys $t }}
         if _, err := {{ db "Exec" "delete" }}; err != nil {
                 return logerror(err)
         }
