@@ -954,10 +954,32 @@ func (f *Funcs) FuncMap() template.FuncMap {
 		// sqlstr funcs
 		"querystr": f.querystr,
 		"sqlstr":   f.sqlstr,
+		"has_sequence": func(v any) bool {
+			return f.sequenceField(v) != nil
+		},
+		"seq_field": func(v any) Field {
+			if seq := f.sequenceField(v); seq != nil {
+				return *seq
+			}
+			return Field{}
+		},
 		// helpers
 		"check_name": checkName,
 		"eval":       eval,
 	}
+}
+
+// sequenceField returns the first sequence field for the provided table, if any.
+func (f *Funcs) sequenceField(v any) *Field {
+	switch t := v.(type) {
+	case Table:
+		for i := range t.Fields {
+			if t.Fields[i].IsSequence {
+				return &t.Fields[i]
+			}
+		}
+	}
+	return nil
 }
 
 func (f *Funcs) firstfn() bool {
