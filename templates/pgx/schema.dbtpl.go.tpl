@@ -1,0 +1,177 @@
+{{ define "enum" }}
+{{- $e := .Data -}}
+// {{ $e.GoName }} is the '{{ $e.SQLName }}' enum type.
+type {{ $e.GoName }} string
+
+// {{ $e.GoName }} values.
+const (
+{{- range $e.Values }}
+        {{ $e.GoName }}{{ .GoName }} {{ $e.GoName }} = "{{ .SQLName }}"
+{{- end }}
+)
+
+// String satisfies the Stringer interface.
+func ({{ short $e.GoName }} {{ $e.GoName }}) String() string {
+        return string({{ short $e.GoName }})
+}
+
+// Valid returns whether the value is valid.
+func ({{ short $e.GoName }} {{ $e.GoName }}) Valid() bool {
+        switch {{ short $e.GoName }} {
+{{- range $e.Values }}
+        case {{ $e.GoName }}{{ .GoName }}:
+                return true
+{{- end }}
+        }
+        return false
+}
+
+// Scan implements the pgx Scanner interface.
+func ({{ short $e.GoName }} *{{ $e.GoName }}) Scan(v any) error {
+        switch x := v.(type) {
+        case string:
+                *{{ short $e.GoName }} = {{ $e.GoName }}(x)
+        case []byte:
+                *{{ short $e.GoName }} = {{ $e.GoName }}(x)
+        default:
+                return fmt.Errorf("cannot scan type %T into {{ $e.GoName }}", v)
+        }
+        if !{{ short $e.GoName }}.Valid() {
+                return fmt.Errorf("invalid {{ $e.GoName }} value: %q", *{{ short $e.GoName }})
+        }
+        return nil
+}
+{{ end }}
+
+{{ define "typedef" }}
+{{- $t := .Data -}}
+{{- if $t.Comment -}}
+// {{ $t.Comment | eval $t.GoName }}
+{{- else -}}
+// {{ $t.GoName }} represents a row from '{{ schema $t.SQLName }}'.
+{{- end }}
+type {{ $t.GoName }} struct {
+{{- range $t.Fields }}
+        {{ .GoName }} {{ type .Type }} {{ field_tag . }} // {{ .SQLName }}
+{{- end }}
+{{- if $t.PrimaryKeys }}
+        // internal fields for tracking state
+        _exists bool
+{{- end }}
+}
+
+// Exists returns true when the row exists in the database.
+func ({{ short $t.GoName }} *{{ $t.GoName }}) Exists() bool {
+        return {{ short $t.GoName }}._exists
+}
+
+{{- if $t.PrimaryKeys }}
+// Insert inserts the row into the database.
+{{ recv_context $t "Insert" }} {
+        {{ sqlstr "insert" $t }}
+    logf(sqlstr, {{ params $t.Fields false }})
+        {{- if has_sequence $t }}
+        if err := {{ db "QueryRow" "insert" }}.Scan(&{{ short $t.GoName }}.{{ (seq_field $t).GoName }}); err != nil {
+                return logerror(err)
+        }
+        {{- else }}
+        if _, err := {{ db "Exec" "insert" }}; err != nil {
+                return logerror(err)
+        }
+        {{- end }}
+        {{ short $t.GoName }}._exists = true
+        return nil
+}
+
+// Update updates the row in the database.
+{{ recv_context $t "Update" }} {
+        {{ sqlstr "update" $t }}
+        logf(sqlstr, {{ params $t.Fields false }}, {{ params $t.PrimaryKeys false }})
+        if _, err := {{ db "Exec" "update" }}; err != nil {
+                return logerror(err)
+        }
+        return nil
+}
+
+// Save saves the row to the database (insert if new, update if exists).
+{{ recv_context $t "Save" }} {
+        if {{ short $t.GoName }}.Exists() {
+                return {{ short $t.GoName }}.Update(ctx, db)
+        }
+        return {{ short $t.GoName }}.Insert(ctx, db)
+}
+
+// Upsert performs an INSERT ... ON CONFLICT DO UPDATE operation.
+{{ recv_context $t "Upsert" }} {
+        {{ sqlstr "upsert" $t }}
+        logf(sqlstr, {{ params $t.Fields false }})
+        {{- if has_sequence $t }}
+        if err := {{ db "QueryRow" "upsert" }}.Scan(&{{ short $t.GoName }}.{{ (seq_field $t).GoName }}); err != nil {
+                return logerror(err)
+        }
+        {{- else }}
+        if _, err := {{ db "Exec" "upsert" }}; err != nil {
+                return logerror(err)
+        }
+        {{- end }}
+        {{ short $t.GoName }}._exists = true
+        return nil
+}
+
+// Delete deletes the row from the database.
+{{ recv_context $t "Delete" }} {
+        {{ sqlstr "delete" $t }}
+        logf(sqlstr, {{ params $t.PrimaryKeys false }})
+        if _, err := {{ db "Exec" "delete" }}; err != nil {
+                return logerror(err)
+        }
+        {{ short $t.GoName }}._exists = false
+        return nil
+}
+{{- end }}
+{{ end }}
+
+{{ define "index" }}
+{{- $i := .Data -}}
+// {{ func_name_context $i }} retrieves a row from '{{ schema $i.Table.SQLName }}' as a [{{ $i.Table.GoName }}].
+//
+// Generated from index '{{ $i.SQLName }}'.
+{{ func_context $i }} {
+        {{ sqlstr "index" $i }}
+        logf(sqlstr, {{ params $i.Fields false }})
+{{- if $i.IsUnique }}
+        {{ short $i.Table }} := {{ $i.Table.GoName }}{
+        {{- if $i.Table.PrimaryKeys }}
+                _exists: true,
+        {{- end }}
+        }
+        if err := {{ db "QueryRow" "index" }}.Scan({{ names (print "&" (short $i.Table) ".") $i.Table }}); err != nil {
+                return nil, logerror(err)
+        }
+        return &{{ short $i.Table }}, nil
+{{- else }}
+        rows, err := {{ db "Query" "index" }}
+        if err != nil {
+                return nil, logerror(err)
+        }
+        return Collect(rows, func(r pgx.Rows) ({{ $i.Table.GoName }}, error) {
+                var {{ short $i.Table }} {{ $i.Table.GoName }}
+                {{- if $i.Table.PrimaryKeys }}
+                {{ short $i.Table }}._exists = true
+                {{- end }}
+                err := r.Scan({{ names (print "&" (short $i.Table) ".") $i.Table }})
+                return {{ short $i.Table }}, err
+        })
+{{- end }}
+}
+{{ end }}
+
+{{ define "foreignkey" }}
+{{- $k := .Data -}}
+// {{ func_name_context $k }} returns the {{ $k.RefTable }} associated with the [{{ $k.Table.GoName }}]'s ({{ names "" $k.Fields }}).
+//
+// Generated from foreign key '{{ $k.SQLName }}'.
+{{ recv_context $k.Table $k }} {
+        return {{ foreign_key_context $k }}
+}
+{{ end }}
