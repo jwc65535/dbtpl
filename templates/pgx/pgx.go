@@ -746,7 +746,13 @@ func goType(ctx context.Context, typ xo.Type) (string, string, error) {
 	if driver != "postgres" {
 		return "", "", fmt.Errorf("unknown driver %q", driver)
 	}
-	return PgxGoType(typ, schema, Int32(ctx), Uint32(ctx))
+	goType, zero, err := PgxGoType(typ, schema, Int32(ctx), Uint32(ctx))
+	if err == nil && typ.Enum != nil {
+		if known := KnownTypes(ctx); known != nil {
+			known[goType] = true
+		}
+	}
+	return goType, zero, err
 }
 
 // PgxGoType maps postgres database types to pgx-compatible Go types.
@@ -807,7 +813,9 @@ func PgxGoType(d xo.Type, schema, intType, _ string) (string, string, error) {
 		return "[]byte", "nil", nil
 	}
 	if d.Enum != nil {
-		return schemaType(d.Type, typNullable, schema)
+		goName := camelExport(d.Enum.Name)
+		zero := fmt.Sprintf("%s(\"\")", goName)
+		return goName, zero, nil
 	}
 	return "any", "nil", nil
 }
