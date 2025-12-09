@@ -583,4 +583,5 @@ func (src sourceFS) Open(name string) (fs.File, error) {
 //go:embed go
 //go:embed json
 //go:embed yaml
+//go:embed pgx
 var files embed.FS
