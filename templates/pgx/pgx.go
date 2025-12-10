@@ -62,14 +62,14 @@ func Init(ctx context.Context, f func(xo.TemplateType)) error {
 		"pgtype.Numeric":     true,
 		"pgtype.Text":        true,
 		"pgtype.Interval":    true,
+		"pgtype.JSON":        true,
 		"pgtype.JSONB":       true,
 		"pgtype.Point":       true,
 		"pgtype.Int4range":   true,
-		"pgtype.Timetz":      true,
+		"pgtype.Time":        true,
 		"pgtype.Timestamp":   true,
 		"pgtype.Timestamptz": true,
 		"pgtype.Date":        true,
-		"pgtype.Time":        true,
 		"pgtype.UUID":        true,
 	}
 	shorts := map[string]string{
@@ -776,7 +776,7 @@ func PgxGoType(d xo.Type, schema, intType, _ string) (string, string, error) {
 	}
 
 	typNullable := d.Nullable
-	typ := strings.ToLower(d.Type)
+	typ := strings.ToLower(schemaType(schema, d.Type))
 	switch typ {
 	case "smallint", "int2":
 		if typNullable {
@@ -835,13 +835,13 @@ func PgxGoType(d xo.Type, schema, intType, _ string) (string, string, error) {
 	case "time without time zone", "time":
 		return "pgtype.Time", "pgtype.Time{}", nil
 	case "time with time zone", "timetz":
-		return "pgtype.Timetz", "pgtype.Timetz{}", nil
+		return "pgtype.Time", "pgtype.Time{}", nil
 	case "interval":
 		return "pgtype.Interval", "pgtype.Interval{}", nil
 	case "uuid":
 		return "pgtype.UUID", "pgtype.UUID{}", nil
 	case "json", "jsonb":
-		return "pgtype.JSONB", "pgtype.JSONB{}", nil
+		return "pgtype.JSON", "pgtype.JSON{}", nil
 	case "point":
 		return "pgtype.Point", "pgtype.Point{}", nil
 	case "int4range":
@@ -852,8 +852,10 @@ func PgxGoType(d xo.Type, schema, intType, _ string) (string, string, error) {
 		zero := fmt.Sprintf("%s(\"\")", goName)
 		return goName, zero, nil
 	}
-	goName := camelExport(schemaType(schema, typ))
-	return goName, fmt.Sprintf("%s(\"\")", goName), nil
+	if typNullable {
+		return "pgtype.Text", "pgtype.Text{}", nil
+	}
+	return "string", `""`, nil
 }
 
 // schemaType removes a schema prefix when present so custom domain and type names
