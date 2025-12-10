@@ -842,6 +842,10 @@ func PgxGoType(d xo.Type, schema, intType, _ string) (string, string, error) {
 		return "pgtype.UUID", "pgtype.UUID{}", nil
 	case "json", "jsonb":
 		return "pgtype.JSONB", "pgtype.JSONB{}", nil
+	case "point":
+		return "pgtype.Point", "pgtype.Point{}", nil
+	case "int4range":
+		return "pgtype.Int4range", "pgtype.Int4range{}", nil
 	}
 	if d.Enum != nil {
 		goName := camelExport(d.Enum.Name)
