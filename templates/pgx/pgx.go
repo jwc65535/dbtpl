@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/kenshaw/inflector"
 	"github.com/kenshaw/snaker"
@@ -43,6 +44,7 @@ func Init(ctx context.Context, f func(xo.TemplateType)) error {
 		"uint64":             true,
 		"float32":            true,
 		"float64":            true,
+		"time.Time":          true,
 		"[]bool":             true,
 		"[][]byte":           true,
 		"[]float64":          true,
@@ -59,6 +61,11 @@ func Init(ctx context.Context, f func(xo.TemplateType)) error {
 		"pgtype.Float8":      true,
 		"pgtype.Numeric":     true,
 		"pgtype.Text":        true,
+		"pgtype.Interval":    true,
+		"pgtype.JSONB":       true,
+		"pgtype.Point":       true,
+		"pgtype.Int4range":   true,
+		"pgtype.Timetz":      true,
 		"pgtype.Timestamp":   true,
 		"pgtype.Timestamptz": true,
 		"pgtype.Date":        true,
@@ -757,7 +764,18 @@ func goType(ctx context.Context, typ xo.Type) (string, string, error) {
 
 // PgxGoType maps postgres database types to pgx-compatible Go types.
 func PgxGoType(d xo.Type, schema, intType, _ string) (string, string, error) {
-	typNullable := d.Nullable && !d.IsArray
+	if d.IsArray {
+		elem := d
+		elem.IsArray = false
+		elem.Nullable = false
+		goType, _, err := PgxGoType(elem, schema, intType, "")
+		if err != nil {
+			return "", "", err
+		}
+		return "[]" + goType, "nil", nil
+	}
+
+	typNullable := d.Nullable
 	typ := strings.ToLower(d.Type)
 	switch typ {
 	case "smallint", "int2":
@@ -780,11 +798,13 @@ func PgxGoType(d xo.Type, schema, intType, _ string) (string, string, error) {
 			return "pgtype.Float4", "pgtype.Float4{}", nil
 		}
 		return "float32", "0", nil
-	case "double precision", "float8", "numeric", "decimal":
+	case "double precision", "float8":
 		if typNullable {
 			return "pgtype.Float8", "pgtype.Float8{}", nil
 		}
 		return "float64", "0", nil
+	case "numeric", "decimal":
+		return "pgtype.Numeric", "pgtype.Numeric{}", nil
 	case "character varying", "varchar", "character", "char", "text", "name":
 		if typNullable {
 			return "pgtype.Text", "pgtype.Text{}", nil
@@ -798,26 +818,47 @@ func PgxGoType(d xo.Type, schema, intType, _ string) (string, string, error) {
 		}
 		return "bool", "false", nil
 	case "timestamp without time zone", "timestamp":
-		return "pgtype.Timestamp", "pgtype.Timestamp{}", nil
+		if typNullable {
+			return "pgtype.Timestamp", "pgtype.Timestamp{}", nil
+		}
+		return "time.Time", "time.Time{}", nil
 	case "timestamp with time zone", "timestamptz":
-		return "pgtype.Timestamptz", "pgtype.Timestamptz{}", nil
+		if typNullable {
+			return "pgtype.Timestamptz", "pgtype.Timestamptz{}", nil
+		}
+		return "time.Time", "time.Time{}", nil
 	case "date":
-		return "pgtype.Date", "pgtype.Date{}", nil
+		if typNullable {
+			return "pgtype.Date", "pgtype.Date{}", nil
+		}
+		return "time.Time", "time.Time{}", nil
 	case "time without time zone", "time":
 		return "pgtype.Time", "pgtype.Time{}", nil
+	case "time with time zone", "timetz":
+		return "pgtype.Timetz", "pgtype.Timetz{}", nil
 	case "interval":
 		return "pgtype.Interval", "pgtype.Interval{}", nil
 	case "uuid":
 		return "pgtype.UUID", "pgtype.UUID{}", nil
 	case "json", "jsonb":
-		return "[]byte", "nil", nil
+		return "pgtype.JSONB", "pgtype.JSONB{}", nil
 	}
 	if d.Enum != nil {
 		goName := camelExport(d.Enum.Name)
 		zero := fmt.Sprintf("%s(\"\")", goName)
 		return goName, zero, nil
 	}
-	return "any", "nil", nil
+	goName := camelExport(schemaType(schema, typ))
+	return goName, fmt.Sprintf("%s(\"\")", goName), nil
+}
+
+// schemaType removes a schema prefix when present so custom domain and type names
+// generate cleaner Go identifiers.
+func schemaType(schema, typ string) string {
+	if strings.HasPrefix(typ, schema+".") {
+		return typ[len(schema)+1:]
+	}
+	return typ
 }
 
 type transformFunc func(...string) string
@@ -1932,8 +1973,7 @@ func (f *Funcs) params(fields []Field, addType bool) string {
 }
 
 func (f *Funcs) param(field Field, addType bool) string {
-	n := strings.Split(snaker.CamelToSnake(field.GoName), "_")
-	s := strings.ToLower(n[0]) + field.GoName[len(n[0]):]
+	s := snaker.ForceLowerCamelIdentifier(field.GoName)
 	// check go reserved names
 	if r, ok := goReservedNames[strings.ToLower(s)]; ok {
 		s = r
