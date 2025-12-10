@@ -1,9 +1,9 @@
 {{ define "db" }}
 // DB is the common interface for database operations using pgx.
 type DB interface {
-        Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
-        Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
-        QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+        ExecContext(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
+        QueryContext(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+        QueryRowContext(ctx context.Context, sql string, args ...any) pgx.Row
 }
 
 // Scannable is an interface for types that can be scanned.
