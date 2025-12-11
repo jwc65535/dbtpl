@@ -29,48 +29,53 @@ import (
 // Init registers the template.
 func Init(ctx context.Context, f func(xo.TemplateType)) error {
 	knownTypes := map[string]bool{
-		"bool":               true,
-		"string":             true,
-		"byte":               true,
-		"rune":               true,
-		"int":                true,
-		"int16":              true,
-		"int32":              true,
-		"int64":              true,
-		"uint":               true,
-		"uint8":              true,
-		"uint16":             true,
-		"uint32":             true,
-		"uint64":             true,
-		"float32":            true,
-		"float64":            true,
-		"time.Time":          true,
-		"[]bool":             true,
-		"[][]byte":           true,
-		"[]float64":          true,
-		"[]float32":          true,
-		"[]int64":            true,
-		"[]int32":            true,
-		"[]string":           true,
-		"[]byte":             true,
-		"pgtype.Bool":        true,
-		"pgtype.Int2":        true,
-		"pgtype.Int4":        true,
-		"pgtype.Int8":        true,
-		"pgtype.Float4":      true,
-		"pgtype.Float8":      true,
-		"pgtype.Numeric":     true,
-		"pgtype.Text":        true,
-		"pgtype.Interval":    true,
-		"pgtype.JSON":        true,
-		"pgtype.JSONB":       true,
-		"pgtype.Point":       true,
-		"pgtype.Int4range":   true,
-		"pgtype.Time":        true,
-		"pgtype.Timestamp":   true,
-		"pgtype.Timestamptz": true,
-		"pgtype.Date":        true,
-		"pgtype.UUID":        true,
+		"bool":                             true,
+		"string":                           true,
+		"byte":                             true,
+		"rune":                             true,
+		"int":                              true,
+		"int16":                            true,
+		"int32":                            true,
+		"int64":                            true,
+		"uint":                             true,
+		"uint8":                            true,
+		"uint16":                           true,
+		"uint32":                           true,
+		"uint64":                           true,
+		"float32":                          true,
+		"float64":                          true,
+		"time.Time":                        true,
+		"[]bool":                           true,
+		"[][]byte":                         true,
+		"[]float64":                        true,
+		"[]float32":                        true,
+		"[]int64":                          true,
+		"[]int32":                          true,
+		"[]string":                         true,
+		"[]byte":                           true,
+		"pgtype.Bool":                      true,
+		"pgtype.Int2":                      true,
+		"pgtype.Int4":                      true,
+		"pgtype.Int8":                      true,
+		"pgtype.Float4":                    true,
+		"pgtype.Float8":                    true,
+		"pgtype.Numeric":                   true,
+		"pgtype.Text":                      true,
+		"pgtype.Interval":                  true,
+		"pgtype.JSON":                      true,
+		"pgtype.JSONB":                     true,
+		"pgtype.Point":                     true,
+		"pgtype.Range[pgtype.Int4]":        true,
+		"pgtype.Range[pgtype.Int8]":        true,
+		"pgtype.Range[pgtype.Numeric]":     true,
+		"pgtype.Range[pgtype.Timestamp]":   true,
+		"pgtype.Range[pgtype.Timestamptz]": true,
+		"pgtype.Range[pgtype.Date]":        true,
+		"pgtype.Time":                      true,
+		"pgtype.Timestamp":                 true,
+		"pgtype.Timestamptz":               true,
+		"pgtype.Date":                      true,
+		"pgtype.UUID":                      true,
 	}
 	shorts := map[string]string{
 		"bool":      "b",
@@ -845,7 +850,17 @@ func PgxGoType(d xo.Type, schema, intType, _ string) (string, string, error) {
 	case "point":
 		return "pgtype.Point", "pgtype.Point{}", nil
 	case "int4range":
-		return "pgtype.Int4range", "pgtype.Int4range{}", nil
+		return "pgtype.Range[pgtype.Int4]", "pgtype.Range[pgtype.Int4]{}", nil
+	case "int8range":
+		return "pgtype.Range[pgtype.Int8]", "pgtype.Range[pgtype.Int8]{}", nil
+	case "numrange":
+		return "pgtype.Range[pgtype.Numeric]", "pgtype.Range[pgtype.Numeric]{}", nil
+	case "tsrange":
+		return "pgtype.Range[pgtype.Timestamp]", "pgtype.Range[pgtype.Timestamp]{}", nil
+	case "tstzrange":
+		return "pgtype.Range[pgtype.Timestamptz]", "pgtype.Range[pgtype.Timestamptz]{}", nil
+	case "daterange":
+		return "pgtype.Range[pgtype.Date]", "pgtype.Range[pgtype.Date]{}", nil
 	}
 	if d.Enum != nil {
 		goName := camelExport(d.Enum.Name)
