@@ -45,6 +45,7 @@ func Init(ctx context.Context, f func(xo.TemplateType)) error {
 		"float32":                          true,
 		"float64":                          true,
 		"time.Time":                        true,
+		"json.RawMessage":                  true,
 		"[]bool":                           true,
 		"[][]byte":                         true,
 		"[]float64":                        true,
@@ -846,7 +847,10 @@ func PgxGoType(d xo.Type, schema, intType, _ string) (string, string, error) {
 	case "uuid":
 		return "pgtype.UUID", "pgtype.UUID{}", nil
 	case "json", "jsonb":
-		return "pgtype.JSON", "pgtype.JSON{}", nil
+		if typNullable {
+			return "*json.RawMessage", "nil", nil
+		}
+		return "json.RawMessage", "nil", nil
 	case "point":
 		return "pgtype.Point", "pgtype.Point{}", nil
 	case "int4range":
