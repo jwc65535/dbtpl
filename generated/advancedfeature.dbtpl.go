@@ -11,14 +11,14 @@ import (
 
 // AdvancedFeature represents a row from 'public.advanced_features'.
 type AdvancedFeature struct {
-	FeatureID     int              `json:"feature_id"`     // feature_id
-	IntArray      []int            `json:"int_array"`      // int_array
-	TextArray     []string         `json:"text_array"`     // text_array
-	ProcessStatus StatusEnum       `json:"process_status"` // process_status
-	PointLocation pgtype.Point     `json:"point_location"` // point_location
-	IntRange      pgtype.Int4range `json:"int_range"`      // int_range
-	FileData      []byte           `json:"file_data"`      // file_data
-	EmailAddress  EmailDomain      `json:"email_address"`  // email_address
+	FeatureID     int                       `json:"feature_id"`     // feature_id
+	IntArray      []int                     `json:"int_array"`      // int_array
+	TextArray     []string                  `json:"text_array"`     // text_array
+	ProcessStatus string                    `json:"process_status"` // process_status
+	PointLocation pgtype.Point              `json:"point_location"` // point_location
+	IntRange      pgtype.Range[pgtype.Int4] `json:"int_range"`      // int_range
+	FileData      []byte                    `json:"file_data"`      // file_data
+	EmailAddress  pgtype.Text               `json:"email_address"`  // email_address
 	// internal fields for tracking state
 	_exists bool
 }
@@ -96,7 +96,7 @@ func (af *AdvancedFeature) Delete(ctx context.Context, db DB) error {
 // AdvancedFeatureByEmailAddress retrieves a row from 'public.advanced_features' as a [AdvancedFeature].
 //
 // Generated from index 'advanced_features_email_address_key'.
-func AdvancedFeatureByEmailAddress(ctx context.Context, db DB, emailAddress EmailDomain) (*AdvancedFeature, error) {
+func AdvancedFeatureByEmailAddress(ctx context.Context, db DB, emailAddress pgtype.Text) (*AdvancedFeature, error) {
 	const sqlstr = `SELECT ` +
 		`feature_id, int_array, text_array, process_status, point_location, int_range, file_data, email_address ` +
 		`FROM public.advanced_features ` +

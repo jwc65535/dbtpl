@@ -4,6 +4,7 @@ package generated
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -11,27 +12,28 @@ import (
 
 // CoreDataType represents a row from 'public.core_data_types'.
 type CoreDataType struct {
-	ID                 int             `json:"id"`                   // id
-	SmallIntVal        int16           `json:"small_int_val"`        // small_int_val
-	IntegerVal         int             `json:"integer_val"`          // integer_val
-	BigIntVal          int64           `json:"big_int_val"`          // big_int_val
-	NumericVal         pgtype.Numeric  `json:"numeric_val"`          // numeric_val
-	RealVal            pgtype.Float4   `json:"real_val"`             // real_val
-	DoublePrecisionVal pgtype.Float8   `json:"double_precision_val"` // double_precision_val
-	CharVal            string          `json:"char_val"`             // char_val
-	VarcharVal         string          `json:"varchar_val"`          // varchar_val
-	TextVal            pgtype.Text     `json:"text_val"`             // text_val
-	BooleanVal         bool            `json:"boolean_val"`          // boolean_val
-	DateVal            time.Time       `json:"date_val"`             // date_val
-	TimeVal            pgtype.Time     `json:"time_val"`             // time_val
-	TimestampVal       time.Time       `json:"timestamp_val"`        // timestamp_val
-	TimestamptzVal     time.Time       `json:"timestamptz_val"`      // timestamptz_val
-	IntervalVal        pgtype.Interval `json:"interval_val"`         // interval_val
-	UUIDVal            pgtype.UUID     `json:"uuid_val"`             // uuid_val
-	JsonbData          pgtype.JSONB    `json:"jsonb_data"`           // jsonb_data
-	NullableInt        pgtype.Int4     `json:"nullable_int"`         // nullable_int
-	NullableText       pgtype.Text     `json:"nullable_text"`        // nullable_text
-	NullableTime       pgtype.Timetz   `json:"nullable_time"`        // nullable_time
+	ID                 int              `json:"id"`                   // id
+	SmallIntVal        int16            `json:"small_int_val"`        // small_int_val
+	IntegerVal         int              `json:"integer_val"`          // integer_val
+	BigIntVal          int64            `json:"big_int_val"`          // big_int_val
+	NumericVal         pgtype.Numeric   `json:"numeric_val"`          // numeric_val
+	RealVal            pgtype.Float4    `json:"real_val"`             // real_val
+	DoublePrecisionVal pgtype.Float8    `json:"double_precision_val"` // double_precision_val
+	CharVal            string           `json:"char_val"`             // char_val
+	VarcharVal         string           `json:"varchar_val"`          // varchar_val
+	TextVal            pgtype.Text      `json:"text_val"`             // text_val
+	BooleanVal         bool             `json:"boolean_val"`          // boolean_val
+	DateVal            time.Time        `json:"date_val"`             // date_val
+	TimeVal            pgtype.Time      `json:"time_val"`             // time_val
+	TimestampVal       time.Time        `json:"timestamp_val"`        // timestamp_val
+	TimestamptzVal     time.Time        `json:"timestamptz_val"`      // timestamptz_val
+	IntervalVal        pgtype.Interval  `json:"interval_val"`         // interval_val
+	UUIDVal            pgtype.UUID      `json:"uuid_val"`             // uuid_val
+	JsonbDataNullable  *json.RawMessage `json:"jsonb_data_nullable"`  // jsonb_data_nullable
+	JsonbData          json.RawMessage  `json:"jsonb_data"`           // jsonb_data
+	NullableInt        pgtype.Int4      `json:"nullable_int"`         // nullable_int
+	NullableText       pgtype.Text      `json:"nullable_text"`        // nullable_text
+	NullableTime       pgtype.Time      `json:"nullable_time"`        // nullable_time
 	// internal fields for tracking state
 	_exists bool
 }
@@ -44,12 +46,12 @@ func (cdt *CoreDataType) Exists() bool {
 // Insert inserts the row into the database.
 func (cdt *CoreDataType) Insert(ctx context.Context, db DB) error {
 	const sqlstr = `INSERT INTO public.core_data_types (` +
-		`small_int_val, integer_val, big_int_val, numeric_val, real_val, double_precision_val, char_val, varchar_val, text_val, boolean_val, date_val, time_val, timestamp_val, timestamptz_val, interval_val, uuid_val, jsonb_data, nullable_int, nullable_text, nullable_time` +
+		`small_int_val, integer_val, big_int_val, numeric_val, real_val, double_precision_val, char_val, varchar_val, text_val, boolean_val, date_val, time_val, timestamp_val, timestamptz_val, interval_val, uuid_val, jsonb_data_nullable, jsonb_data, nullable_int, nullable_text, nullable_time` +
 		`) VALUES (` +
-		`$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20` +
+		`$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21` +
 		`) RETURNING id`
-	logf(sqlstr, cdt.ID, cdt.SmallIntVal, cdt.IntegerVal, cdt.BigIntVal, cdt.NumericVal, cdt.RealVal, cdt.DoublePrecisionVal, cdt.CharVal, cdt.VarcharVal, cdt.TextVal, cdt.BooleanVal, cdt.DateVal, cdt.TimeVal, cdt.TimestampVal, cdt.TimestamptzVal, cdt.IntervalVal, cdt.UUIDVal, cdt.JsonbData, cdt.NullableInt, cdt.NullableText, cdt.NullableTime)
-	if err := db.QueryRowContext(ctx, sqlstr, cdt.SmallIntVal, cdt.IntegerVal, cdt.BigIntVal, cdt.NumericVal, cdt.RealVal, cdt.DoublePrecisionVal, cdt.CharVal, cdt.VarcharVal, cdt.TextVal, cdt.BooleanVal, cdt.DateVal, cdt.TimeVal, cdt.TimestampVal, cdt.TimestamptzVal, cdt.IntervalVal, cdt.UUIDVal, cdt.JsonbData, cdt.NullableInt, cdt.NullableText, cdt.NullableTime).Scan(&cdt.ID); err != nil {
+	logf(sqlstr, cdt.ID, cdt.SmallIntVal, cdt.IntegerVal, cdt.BigIntVal, cdt.NumericVal, cdt.RealVal, cdt.DoublePrecisionVal, cdt.CharVal, cdt.VarcharVal, cdt.TextVal, cdt.BooleanVal, cdt.DateVal, cdt.TimeVal, cdt.TimestampVal, cdt.TimestamptzVal, cdt.IntervalVal, cdt.UUIDVal, cdt.JsonbDataNullable, cdt.JsonbData, cdt.NullableInt, cdt.NullableText, cdt.NullableTime)
+	if err := db.QueryRowContext(ctx, sqlstr, cdt.SmallIntVal, cdt.IntegerVal, cdt.BigIntVal, cdt.NumericVal, cdt.RealVal, cdt.DoublePrecisionVal, cdt.CharVal, cdt.VarcharVal, cdt.TextVal, cdt.BooleanVal, cdt.DateVal, cdt.TimeVal, cdt.TimestampVal, cdt.TimestamptzVal, cdt.IntervalVal, cdt.UUIDVal, cdt.JsonbDataNullable, cdt.JsonbData, cdt.NullableInt, cdt.NullableText, cdt.NullableTime).Scan(&cdt.ID); err != nil {
 		return logerror(err)
 	}
 	cdt._exists = true
@@ -59,10 +61,10 @@ func (cdt *CoreDataType) Insert(ctx context.Context, db DB) error {
 // Update updates the row in the database.
 func (cdt *CoreDataType) Update(ctx context.Context, db DB) error {
 	const sqlstr = `UPDATE public.core_data_types SET ` +
-		`small_int_val = $1, integer_val = $2, big_int_val = $3, numeric_val = $4, real_val = $5, double_precision_val = $6, char_val = $7, varchar_val = $8, text_val = $9, boolean_val = $10, date_val = $11, time_val = $12, timestamp_val = $13, timestamptz_val = $14, interval_val = $15, uuid_val = $16, jsonb_data = $17, nullable_int = $18, nullable_text = $19, nullable_time = $20 ` +
-		`WHERE id = $21`
-	logf(sqlstr, cdt.SmallIntVal, cdt.IntegerVal, cdt.BigIntVal, cdt.NumericVal, cdt.RealVal, cdt.DoublePrecisionVal, cdt.CharVal, cdt.VarcharVal, cdt.TextVal, cdt.BooleanVal, cdt.DateVal, cdt.TimeVal, cdt.TimestampVal, cdt.TimestamptzVal, cdt.IntervalVal, cdt.UUIDVal, cdt.JsonbData, cdt.NullableInt, cdt.NullableText, cdt.NullableTime, cdt.ID)
-	if _, err := db.ExecContext(ctx, sqlstr, cdt.SmallIntVal, cdt.IntegerVal, cdt.BigIntVal, cdt.NumericVal, cdt.RealVal, cdt.DoublePrecisionVal, cdt.CharVal, cdt.VarcharVal, cdt.TextVal, cdt.BooleanVal, cdt.DateVal, cdt.TimeVal, cdt.TimestampVal, cdt.TimestamptzVal, cdt.IntervalVal, cdt.UUIDVal, cdt.JsonbData, cdt.NullableInt, cdt.NullableText, cdt.NullableTime, cdt.ID); err != nil {
+		`small_int_val = $1, integer_val = $2, big_int_val = $3, numeric_val = $4, real_val = $5, double_precision_val = $6, char_val = $7, varchar_val = $8, text_val = $9, boolean_val = $10, date_val = $11, time_val = $12, timestamp_val = $13, timestamptz_val = $14, interval_val = $15, uuid_val = $16, jsonb_data_nullable = $17, jsonb_data = $18, nullable_int = $19, nullable_text = $20, nullable_time = $21 ` +
+		`WHERE id = $22`
+	logf(sqlstr, cdt.SmallIntVal, cdt.IntegerVal, cdt.BigIntVal, cdt.NumericVal, cdt.RealVal, cdt.DoublePrecisionVal, cdt.CharVal, cdt.VarcharVal, cdt.TextVal, cdt.BooleanVal, cdt.DateVal, cdt.TimeVal, cdt.TimestampVal, cdt.TimestamptzVal, cdt.IntervalVal, cdt.UUIDVal, cdt.JsonbDataNullable, cdt.JsonbData, cdt.NullableInt, cdt.NullableText, cdt.NullableTime, cdt.ID)
+	if _, err := db.ExecContext(ctx, sqlstr, cdt.SmallIntVal, cdt.IntegerVal, cdt.BigIntVal, cdt.NumericVal, cdt.RealVal, cdt.DoublePrecisionVal, cdt.CharVal, cdt.VarcharVal, cdt.TextVal, cdt.BooleanVal, cdt.DateVal, cdt.TimeVal, cdt.TimestampVal, cdt.TimestamptzVal, cdt.IntervalVal, cdt.UUIDVal, cdt.JsonbDataNullable, cdt.JsonbData, cdt.NullableInt, cdt.NullableText, cdt.NullableTime, cdt.ID); err != nil {
 		return logerror(err)
 	}
 	return nil
@@ -79,15 +81,15 @@ func (cdt *CoreDataType) Save(ctx context.Context, db DB) error {
 // Upsert performs an INSERT ... ON CONFLICT DO UPDATE operation.
 func (cdt *CoreDataType) Upsert(ctx context.Context, db DB) error {
 	const sqlstr = `INSERT INTO public.core_data_types (` +
-		`id, small_int_val, integer_val, big_int_val, numeric_val, real_val, double_precision_val, char_val, varchar_val, text_val, boolean_val, date_val, time_val, timestamp_val, timestamptz_val, interval_val, uuid_val, jsonb_data, nullable_int, nullable_text, nullable_time` +
+		`id, small_int_val, integer_val, big_int_val, numeric_val, real_val, double_precision_val, char_val, varchar_val, text_val, boolean_val, date_val, time_val, timestamp_val, timestamptz_val, interval_val, uuid_val, jsonb_data_nullable, jsonb_data, nullable_int, nullable_text, nullable_time` +
 		`) VALUES (` +
-		`$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21` +
+		`$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22` +
 		`)` +
 		` ON CONFLICT (id) DO ` +
 		`UPDATE SET ` +
-		`small_int_val = EXCLUDED.small_int_val, integer_val = EXCLUDED.integer_val, big_int_val = EXCLUDED.big_int_val, numeric_val = EXCLUDED.numeric_val, real_val = EXCLUDED.real_val, double_precision_val = EXCLUDED.double_precision_val, char_val = EXCLUDED.char_val, varchar_val = EXCLUDED.varchar_val, text_val = EXCLUDED.text_val, boolean_val = EXCLUDED.boolean_val, date_val = EXCLUDED.date_val, time_val = EXCLUDED.time_val, timestamp_val = EXCLUDED.timestamp_val, timestamptz_val = EXCLUDED.timestamptz_val, interval_val = EXCLUDED.interval_val, uuid_val = EXCLUDED.uuid_val, jsonb_data = EXCLUDED.jsonb_data, nullable_int = EXCLUDED.nullable_int, nullable_text = EXCLUDED.nullable_text, nullable_time = EXCLUDED.nullable_time `
-	logf(sqlstr, cdt.ID, cdt.SmallIntVal, cdt.IntegerVal, cdt.BigIntVal, cdt.NumericVal, cdt.RealVal, cdt.DoublePrecisionVal, cdt.CharVal, cdt.VarcharVal, cdt.TextVal, cdt.BooleanVal, cdt.DateVal, cdt.TimeVal, cdt.TimestampVal, cdt.TimestamptzVal, cdt.IntervalVal, cdt.UUIDVal, cdt.JsonbData, cdt.NullableInt, cdt.NullableText, cdt.NullableTime)
-	if err := db.QueryRowContext(ctx, sqlstr, cdt.SmallIntVal, cdt.IntegerVal, cdt.BigIntVal, cdt.NumericVal, cdt.RealVal, cdt.DoublePrecisionVal, cdt.CharVal, cdt.VarcharVal, cdt.TextVal, cdt.BooleanVal, cdt.DateVal, cdt.TimeVal, cdt.TimestampVal, cdt.TimestamptzVal, cdt.IntervalVal, cdt.UUIDVal, cdt.JsonbData, cdt.NullableInt, cdt.NullableText, cdt.NullableTime).Scan(&cdt.ID); err != nil {
+		`small_int_val = EXCLUDED.small_int_val, integer_val = EXCLUDED.integer_val, big_int_val = EXCLUDED.big_int_val, numeric_val = EXCLUDED.numeric_val, real_val = EXCLUDED.real_val, double_precision_val = EXCLUDED.double_precision_val, char_val = EXCLUDED.char_val, varchar_val = EXCLUDED.varchar_val, text_val = EXCLUDED.text_val, boolean_val = EXCLUDED.boolean_val, date_val = EXCLUDED.date_val, time_val = EXCLUDED.time_val, timestamp_val = EXCLUDED.timestamp_val, timestamptz_val = EXCLUDED.timestamptz_val, interval_val = EXCLUDED.interval_val, uuid_val = EXCLUDED.uuid_val, jsonb_data_nullable = EXCLUDED.jsonb_data_nullable, jsonb_data = EXCLUDED.jsonb_data, nullable_int = EXCLUDED.nullable_int, nullable_text = EXCLUDED.nullable_text, nullable_time = EXCLUDED.nullable_time `
+	logf(sqlstr, cdt.ID, cdt.SmallIntVal, cdt.IntegerVal, cdt.BigIntVal, cdt.NumericVal, cdt.RealVal, cdt.DoublePrecisionVal, cdt.CharVal, cdt.VarcharVal, cdt.TextVal, cdt.BooleanVal, cdt.DateVal, cdt.TimeVal, cdt.TimestampVal, cdt.TimestamptzVal, cdt.IntervalVal, cdt.UUIDVal, cdt.JsonbDataNullable, cdt.JsonbData, cdt.NullableInt, cdt.NullableText, cdt.NullableTime)
+	if err := db.QueryRowContext(ctx, sqlstr, cdt.SmallIntVal, cdt.IntegerVal, cdt.BigIntVal, cdt.NumericVal, cdt.RealVal, cdt.DoublePrecisionVal, cdt.CharVal, cdt.VarcharVal, cdt.TextVal, cdt.BooleanVal, cdt.DateVal, cdt.TimeVal, cdt.TimestampVal, cdt.TimestamptzVal, cdt.IntervalVal, cdt.UUIDVal, cdt.JsonbDataNullable, cdt.JsonbData, cdt.NullableInt, cdt.NullableText, cdt.NullableTime).Scan(&cdt.ID); err != nil {
 		return logerror(err)
 	}
 	cdt._exists = true
@@ -111,14 +113,14 @@ func (cdt *CoreDataType) Delete(ctx context.Context, db DB) error {
 // Generated from index 'core_data_types_pkey'.
 func CoreDataTypeByID(ctx context.Context, db DB, id int) (*CoreDataType, error) {
 	const sqlstr = `SELECT ` +
-		`id, small_int_val, integer_val, big_int_val, numeric_val, real_val, double_precision_val, char_val, varchar_val, text_val, boolean_val, date_val, time_val, timestamp_val, timestamptz_val, interval_val, uuid_val, jsonb_data, nullable_int, nullable_text, nullable_time ` +
+		`id, small_int_val, integer_val, big_int_val, numeric_val, real_val, double_precision_val, char_val, varchar_val, text_val, boolean_val, date_val, time_val, timestamp_val, timestamptz_val, interval_val, uuid_val, jsonb_data_nullable, jsonb_data, nullable_int, nullable_text, nullable_time ` +
 		`FROM public.core_data_types ` +
 		`WHERE id = $1`
 	logf(sqlstr, id)
 	cdt := CoreDataType{
 		_exists: true,
 	}
-	if err := db.QueryRowContext(ctx, sqlstr, id).Scan(&cdt.ID, &cdt.SmallIntVal, &cdt.IntegerVal, &cdt.BigIntVal, &cdt.NumericVal, &cdt.RealVal, &cdt.DoublePrecisionVal, &cdt.CharVal, &cdt.VarcharVal, &cdt.TextVal, &cdt.BooleanVal, &cdt.DateVal, &cdt.TimeVal, &cdt.TimestampVal, &cdt.TimestamptzVal, &cdt.IntervalVal, &cdt.UUIDVal, &cdt.JsonbData, &cdt.NullableInt, &cdt.NullableText, &cdt.NullableTime); err != nil {
+	if err := db.QueryRowContext(ctx, sqlstr, id).Scan(&cdt.ID, &cdt.SmallIntVal, &cdt.IntegerVal, &cdt.BigIntVal, &cdt.NumericVal, &cdt.RealVal, &cdt.DoublePrecisionVal, &cdt.CharVal, &cdt.VarcharVal, &cdt.TextVal, &cdt.BooleanVal, &cdt.DateVal, &cdt.TimeVal, &cdt.TimestampVal, &cdt.TimestamptzVal, &cdt.IntervalVal, &cdt.UUIDVal, &cdt.JsonbDataNullable, &cdt.JsonbData, &cdt.NullableInt, &cdt.NullableText, &cdt.NullableTime); err != nil {
 		return nil, logerror(err)
 	}
 	return &cdt, nil
