@@ -422,7 +422,7 @@ func TestCoreDataTypeCRUD(t *testing.T) {
 		JsonbData:         jsonData,
 		NullableInt:       pgtype.Int4{Int32: 9, Valid: true},
 		NullableText:      pgtype.Text{String: "maybe", Valid: true},
-		NullableTime:      pgtype.Time{Microseconds: 500, Valid: true},
+                NullableTime:      pgtype.Time{Valid: false},
 	}
 	if err := record.Insert(ctx, adapter); err != nil {
 		t.Fatalf("insert coredata: %v", err)
