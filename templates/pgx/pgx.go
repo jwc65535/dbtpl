@@ -743,11 +743,18 @@ func convertField(ctx context.Context, tf transformFunc, f xo.Field) (Field, err
 	if err != nil {
 		return Field{}, err
 	}
+	hasDefault := f.Default != ""
+	if hasDefault && strings.HasPrefix(typ, "pgtype.") {
+		typ = "*" + typ
+		zero = "nil"
+	}
 	return Field{
 		Type:       typ,
 		GoName:     tf(f.Name),
 		SQLName:    f.Name,
 		Zero:       zero,
+		HasDefault: hasDefault,
+		Default:    f.Default,
 		IsPrimary:  f.IsPrimary,
 		IsSequence: f.IsSequence,
 		Comment:    f.Comment,
@@ -2508,6 +2515,8 @@ type Field struct {
 	SQLName    string
 	Type       string
 	Zero       string
+	HasDefault bool
+	Default    string
 	IsPrimary  bool
 	IsSequence bool
 	Comment    string
