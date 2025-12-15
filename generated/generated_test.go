@@ -409,16 +409,20 @@ func TestCoreDataTypeCRUD(t *testing.T) {
 		TextVal:            pgtype.Text{String: "text", Valid: true},
 		BooleanVal:         true,
 		DateVal:            time.Now().UTC(),
-		TimeVal:            pgtype.Time{Microseconds: time.Now().UTC().UnixMicro(), Valid: true},
-		TimestampVal:       time.Now().UTC(),
-		TimestamptzVal:     time.Now().UTC(),
-		IntervalVal:        pgtype.Interval{Microseconds: 1000, Valid: true},
-		UUIDVal:            pgtype.UUID{Bytes: [16]byte{1, 2, 3, 4}, Valid: true},
-		JsonbDataNullable:  &nullableJSON,
-		JsonbData:          jsonData,
-		NullableInt:        pgtype.Int4{Int32: 9, Valid: true},
-		NullableText:       pgtype.Text{String: "maybe", Valid: true},
-		NullableTime:       pgtype.Time{Microseconds: 500, Valid: true},
+		TimeVal: func() pgtype.Time {
+			now := time.Now().UTC()
+			midnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+			return pgtype.Time{Microseconds: now.Sub(midnight).Microseconds(), Valid: true}
+		}(),
+		TimestampVal:      time.Now().UTC(),
+		TimestamptzVal:    time.Now().UTC(),
+		IntervalVal:       pgtype.Interval{Microseconds: 1000, Valid: true},
+		UUIDVal:           pgtype.UUID{Bytes: [16]byte{1, 2, 3, 4}, Valid: true},
+		JsonbDataNullable: &nullableJSON,
+		JsonbData:         jsonData,
+		NullableInt:       pgtype.Int4{Int32: 9, Valid: true},
+		NullableText:      pgtype.Text{String: "maybe", Valid: true},
+                NullableTime:      pgtype.Time{Valid: false},
 	}
 	if err := record.Insert(ctx, adapter); err != nil {
 		t.Fatalf("insert coredata: %v", err)
