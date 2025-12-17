@@ -5,6 +5,8 @@ package generated
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -30,13 +32,30 @@ func (af *AdvancedFeature) Exists() bool {
 
 // Insert inserts the row into the database.
 func (af *AdvancedFeature) Insert(ctx context.Context, db DB) error {
-	const sqlstr = `INSERT INTO public.advanced_features (` +
-		`int_array, text_array, process_status, point_location, int_range, file_data, email_address` +
-		`) VALUES (` +
-		`$1, $2, $3, $4, $5, $6, $7` +
-		`) RETURNING feature_id`
-	logf(sqlstr, af.FeatureID, af.IntArray, af.TextArray, af.ProcessStatus, af.PointLocation, af.IntRange, af.FileData, af.EmailAddress)
-	if err := db.QueryRowContext(ctx, sqlstr, af.IntArray, af.TextArray, af.ProcessStatus, af.PointLocation, af.IntRange, af.FileData, af.EmailAddress).Scan(&af.FeatureID); err != nil {
+	columns := make([]string, 0, 8)
+	values := make([]string, 0, 8)
+	args := make([]any, 0, 8)
+	param := 1
+
+	add := func(name string, arg any) {
+		columns = append(columns, name)
+		values = append(values, fmt.Sprintf("$%d", param))
+		args = append(args, arg)
+		param++
+	}
+	add("int_array", af.IntArray)
+	add("text_array", af.TextArray)
+	if af.ProcessStatus != nil {
+		add("process_status", af.ProcessStatus)
+	}
+	add("point_location", af.PointLocation)
+	add("int_range", af.IntRange)
+	add("file_data", af.FileData)
+	add("email_address", af.EmailAddress)
+
+	sqlstr := fmt.Sprintf("INSERT INTO public.advanced_features (%s) VALUES (%s)", strings.Join(columns, ", "), strings.Join(values, ", "))
+	logf(sqlstr, args...)
+	if err := db.QueryRowContext(ctx, sqlstr, args...).Scan(&af.FeatureID); err != nil {
 		return logerror(err)
 	}
 	af._exists = true
@@ -45,11 +64,33 @@ func (af *AdvancedFeature) Insert(ctx context.Context, db DB) error {
 
 // Update updates the row in the database.
 func (af *AdvancedFeature) Update(ctx context.Context, db DB) error {
-	const sqlstr = `UPDATE public.advanced_features SET ` +
-		`int_array = $1, text_array = $2, process_status = $3, point_location = $4, int_range = $5, file_data = $6, email_address = $7 ` +
-		`WHERE feature_id = $8`
-	logf(sqlstr, af.IntArray, af.TextArray, af.ProcessStatus, af.PointLocation, af.IntRange, af.FileData, af.EmailAddress, af.FeatureID)
-	if _, err := db.ExecContext(ctx, sqlstr, af.IntArray, af.TextArray, af.ProcessStatus, af.PointLocation, af.IntRange, af.FileData, af.EmailAddress, af.FeatureID); err != nil {
+	setClauses := make([]string, 0, 8)
+	args := make([]any, 0, 8)
+	param := 1
+
+	add := func(name string, arg any) {
+		setClauses = append(setClauses, fmt.Sprintf("%s = $%d", name, param))
+		args = append(args, arg)
+		param++
+	}
+	add("int_array", af.IntArray)
+	add("text_array", af.TextArray)
+	if af.ProcessStatus != nil {
+		add("process_status", af.ProcessStatus)
+	}
+	add("point_location", af.PointLocation)
+	add("int_range", af.IntRange)
+	add("file_data", af.FileData)
+	add("email_address", af.EmailAddress)
+
+	where := make([]string, 0, 1)
+	where = append(where, fmt.Sprintf("feature_id = $%d", param))
+	args = append(args, af.FeatureID)
+	param++
+
+	sqlstr := fmt.Sprintf("UPDATE public.advanced_features SET %s WHERE %s", strings.Join(setClauses, ", "), strings.Join(where, " AND "))
+	logf(sqlstr, args...)
+	if _, err := db.ExecContext(ctx, sqlstr, args...); err != nil {
 		return logerror(err)
 	}
 	return nil

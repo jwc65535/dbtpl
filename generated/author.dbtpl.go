@@ -4,17 +4,19 @@ package generated
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // Author represents a row from 'public.authors'.
 type Author struct {
-	AuthorID  int                `json:"author_id"`  // author_id
-	FirstName string             `json:"first_name"` // first_name
-	LastName  string             `json:"last_name"`  // last_name
-	Bio       pgtype.Text        `json:"bio"`        // bio
-	CreatedAt pgtype.Timestamptz `json:"created_at"` // created_at
+	AuthorID  int                 `json:"author_id"`  // author_id
+	FirstName string              `json:"first_name"` // first_name
+	LastName  string              `json:"last_name"`  // last_name
+	Bio       pgtype.Text         `json:"bio"`        // bio
+	CreatedAt *pgtype.Timestamptz `json:"created_at"` // created_at
 	// internal fields for tracking state
 	_exists bool
 }
@@ -26,13 +28,27 @@ func (a *Author) Exists() bool {
 
 // Insert inserts the row into the database.
 func (a *Author) Insert(ctx context.Context, db DB) error {
-	const sqlstr = `INSERT INTO public.authors (` +
-		`first_name, last_name, bio, created_at` +
-		`) VALUES (` +
-		`$1, $2, $3, $4` +
-		`) RETURNING author_id`
-	logf(sqlstr, a.AuthorID, a.FirstName, a.LastName, a.Bio, a.CreatedAt)
-	if err := db.QueryRowContext(ctx, sqlstr, a.FirstName, a.LastName, a.Bio, a.CreatedAt).Scan(&a.AuthorID); err != nil {
+	columns := make([]string, 0, 5)
+	values := make([]string, 0, 5)
+	args := make([]any, 0, 5)
+	param := 1
+
+	add := func(name string, arg any) {
+		columns = append(columns, name)
+		values = append(values, fmt.Sprintf("$%d", param))
+		args = append(args, arg)
+		param++
+	}
+	add("first_name", a.FirstName)
+	add("last_name", a.LastName)
+	add("bio", a.Bio)
+	if a.CreatedAt != nil {
+		add("created_at", a.CreatedAt)
+	}
+
+	sqlstr := fmt.Sprintf("INSERT INTO public.authors (%s) VALUES (%s)", strings.Join(columns, ", "), strings.Join(values, ", "))
+	logf(sqlstr, args...)
+	if err := db.QueryRowContext(ctx, sqlstr, args...).Scan(&a.AuthorID); err != nil {
 		return logerror(err)
 	}
 	a._exists = true
@@ -41,11 +57,30 @@ func (a *Author) Insert(ctx context.Context, db DB) error {
 
 // Update updates the row in the database.
 func (a *Author) Update(ctx context.Context, db DB) error {
-	const sqlstr = `UPDATE public.authors SET ` +
-		`first_name = $1, last_name = $2, bio = $3, created_at = $4 ` +
-		`WHERE author_id = $5`
-	logf(sqlstr, a.FirstName, a.LastName, a.Bio, a.CreatedAt, a.AuthorID)
-	if _, err := db.ExecContext(ctx, sqlstr, a.FirstName, a.LastName, a.Bio, a.CreatedAt, a.AuthorID); err != nil {
+	setClauses := make([]string, 0, 5)
+	args := make([]any, 0, 5)
+	param := 1
+
+	add := func(name string, arg any) {
+		setClauses = append(setClauses, fmt.Sprintf("%s = $%d", name, param))
+		args = append(args, arg)
+		param++
+	}
+	add("first_name", a.FirstName)
+	add("last_name", a.LastName)
+	add("bio", a.Bio)
+	if a.CreatedAt != nil {
+		add("created_at", a.CreatedAt)
+	}
+
+	where := make([]string, 0, 1)
+	where = append(where, fmt.Sprintf("author_id = $%d", param))
+	args = append(args, a.AuthorID)
+	param++
+
+	sqlstr := fmt.Sprintf("UPDATE public.authors SET %s WHERE %s", strings.Join(setClauses, ", "), strings.Join(where, " AND "))
+	logf(sqlstr, args...)
+	if _, err := db.ExecContext(ctx, sqlstr, args...); err != nil {
 		return logerror(err)
 	}
 	return nil
