@@ -4,6 +4,8 @@ package generated
 
 import (
 	"context"
+	"fmt"
+	"strings"
 )
 
 // Tag represents a row from 'public.tags'.
@@ -21,13 +23,22 @@ func (t *Tag) Exists() bool {
 
 // Insert inserts the row into the database.
 func (t *Tag) Insert(ctx context.Context, db DB) error {
-	const sqlstr = `INSERT INTO public.tags (` +
-		`tag_name` +
-		`) VALUES (` +
-		`$1` +
-		`) RETURNING tag_id`
-	logf(sqlstr, t.TagID, t.TagName)
-	if err := db.QueryRowContext(ctx, sqlstr, t.TagName).Scan(&t.TagID); err != nil {
+	columns := make([]string, 0, 2)
+	values := make([]string, 0, 2)
+	args := make([]any, 0, 2)
+	param := 1
+
+	add := func(name string, arg any) {
+		columns = append(columns, name)
+		values = append(values, fmt.Sprintf("$%d", param))
+		args = append(args, arg)
+		param++
+	}
+	add("tag_name", t.TagName)
+
+	sqlstr := fmt.Sprintf("INSERT INTO public.tags (%s) VALUES (%s)", strings.Join(columns, ", "), strings.Join(values, ", "))
+	logf(sqlstr, args...)
+	if err := db.QueryRowContext(ctx, sqlstr, args...).Scan(&t.TagID); err != nil {
 		return logerror(err)
 	}
 	t._exists = true
@@ -36,11 +47,25 @@ func (t *Tag) Insert(ctx context.Context, db DB) error {
 
 // Update updates the row in the database.
 func (t *Tag) Update(ctx context.Context, db DB) error {
-	const sqlstr = `UPDATE public.tags SET ` +
-		`tag_name = $1 ` +
-		`WHERE tag_id = $2`
-	logf(sqlstr, t.TagName, t.TagID)
-	if _, err := db.ExecContext(ctx, sqlstr, t.TagName, t.TagID); err != nil {
+	setClauses := make([]string, 0, 2)
+	args := make([]any, 0, 2)
+	param := 1
+
+	add := func(name string, arg any) {
+		setClauses = append(setClauses, fmt.Sprintf("%s = $%d", name, param))
+		args = append(args, arg)
+		param++
+	}
+	add("tag_name", t.TagName)
+
+	where := make([]string, 0, 1)
+	where = append(where, fmt.Sprintf("tag_id = $%d", param))
+	args = append(args, t.TagID)
+	param++
+
+	sqlstr := fmt.Sprintf("UPDATE public.tags SET %s WHERE %s", strings.Join(setClauses, ", "), strings.Join(where, " AND "))
+	logf(sqlstr, args...)
+	if _, err := db.ExecContext(ctx, sqlstr, args...); err != nil {
 		return logerror(err)
 	}
 	return nil

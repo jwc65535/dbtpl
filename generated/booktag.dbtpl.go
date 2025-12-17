@@ -4,6 +4,8 @@ package generated
 
 import (
 	"context"
+	"fmt"
+	"strings"
 )
 
 // BookTag represents a row from 'public.book_tags'.
@@ -21,13 +23,23 @@ func (bt *BookTag) Exists() bool {
 
 // Insert inserts the row into the database.
 func (bt *BookTag) Insert(ctx context.Context, db DB) error {
-	const sqlstr = `INSERT INTO public.book_tags (` +
-		`book_id, tag_id` +
-		`) VALUES (` +
-		`$1, $2` +
-		`) RETURNING `
-	logf(sqlstr, bt.BookID, bt.TagID)
-	if _, err := db.ExecContext(ctx, sqlstr, bt.BookID, bt.TagID); err != nil {
+	columns := make([]string, 0, 2)
+	values := make([]string, 0, 2)
+	args := make([]any, 0, 2)
+	param := 1
+
+	add := func(name string, arg any) {
+		columns = append(columns, name)
+		values = append(values, fmt.Sprintf("$%d", param))
+		args = append(args, arg)
+		param++
+	}
+	add("book_id", bt.BookID)
+	add("tag_id", bt.TagID)
+
+	sqlstr := fmt.Sprintf("INSERT INTO public.book_tags (%s) VALUES (%s)", strings.Join(columns, ", "), strings.Join(values, ", "))
+	logf(sqlstr, args...)
+	if _, err := db.ExecContext(ctx, sqlstr, args...); err != nil {
 		return logerror(err)
 	}
 	bt._exists = true
@@ -36,11 +48,27 @@ func (bt *BookTag) Insert(ctx context.Context, db DB) error {
 
 // Update updates the row in the database.
 func (bt *BookTag) Update(ctx context.Context, db DB) error {
-	const sqlstr = `UPDATE public.book_tags SET ` +
-		` ` +
-		`WHERE book_id = $1 AND tag_id = $2`
-	logf(sqlstr, bt.BookID, bt.TagID)
-	if _, err := db.ExecContext(ctx, sqlstr, bt.BookID, bt.TagID); err != nil {
+	setClauses := make([]string, 0, 2)
+	args := make([]any, 0, 2)
+	param := 1
+
+	add := func(name string, arg any) {
+		setClauses = append(setClauses, fmt.Sprintf("%s = $%d", name, param))
+		args = append(args, arg)
+		param++
+	}
+
+	where := make([]string, 0, 2)
+	where = append(where, fmt.Sprintf("book_id = $%d", param))
+	args = append(args, bt.BookID)
+	param++
+	where = append(where, fmt.Sprintf("tag_id = $%d", param))
+	args = append(args, bt.TagID)
+	param++
+
+	sqlstr := fmt.Sprintf("UPDATE public.book_tags SET %s WHERE %s", strings.Join(setClauses, ", "), strings.Join(where, " AND "))
+	logf(sqlstr, args...)
+	if _, err := db.ExecContext(ctx, sqlstr, args...); err != nil {
 		return logerror(err)
 	}
 	return nil

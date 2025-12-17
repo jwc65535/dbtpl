@@ -4,6 +4,8 @@ package generated
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -27,13 +29,26 @@ func (b *Book) Exists() bool {
 
 // Insert inserts the row into the database.
 func (b *Book) Insert(ctx context.Context, db DB) error {
-	const sqlstr = `INSERT INTO public.books (` +
-		`author_id, title, published_year, isbn, price` +
-		`) VALUES (` +
-		`$1, $2, $3, $4, $5` +
-		`) RETURNING book_id`
-	logf(sqlstr, b.BookID, b.AuthorID, b.Title, b.PublishedYear, b.Isbn, b.Price)
-	if err := db.QueryRowContext(ctx, sqlstr, b.AuthorID, b.Title, b.PublishedYear, b.Isbn, b.Price).Scan(&b.BookID); err != nil {
+	columns := make([]string, 0, 6)
+	values := make([]string, 0, 6)
+	args := make([]any, 0, 6)
+	param := 1
+
+	add := func(name string, arg any) {
+		columns = append(columns, name)
+		values = append(values, fmt.Sprintf("$%d", param))
+		args = append(args, arg)
+		param++
+	}
+	add("author_id", b.AuthorID)
+	add("title", b.Title)
+	add("published_year", b.PublishedYear)
+	add("isbn", b.Isbn)
+	add("price", b.Price)
+
+	sqlstr := fmt.Sprintf("INSERT INTO public.books (%s) VALUES (%s)", strings.Join(columns, ", "), strings.Join(values, ", "))
+	logf(sqlstr, args...)
+	if err := db.QueryRowContext(ctx, sqlstr, args...).Scan(&b.BookID); err != nil {
 		return logerror(err)
 	}
 	b._exists = true
@@ -42,11 +57,29 @@ func (b *Book) Insert(ctx context.Context, db DB) error {
 
 // Update updates the row in the database.
 func (b *Book) Update(ctx context.Context, db DB) error {
-	const sqlstr = `UPDATE public.books SET ` +
-		`author_id = $1, title = $2, published_year = $3, isbn = $4, price = $5 ` +
-		`WHERE book_id = $6`
-	logf(sqlstr, b.AuthorID, b.Title, b.PublishedYear, b.Isbn, b.Price, b.BookID)
-	if _, err := db.ExecContext(ctx, sqlstr, b.AuthorID, b.Title, b.PublishedYear, b.Isbn, b.Price, b.BookID); err != nil {
+	setClauses := make([]string, 0, 6)
+	args := make([]any, 0, 6)
+	param := 1
+
+	add := func(name string, arg any) {
+		setClauses = append(setClauses, fmt.Sprintf("%s = $%d", name, param))
+		args = append(args, arg)
+		param++
+	}
+	add("author_id", b.AuthorID)
+	add("title", b.Title)
+	add("published_year", b.PublishedYear)
+	add("isbn", b.Isbn)
+	add("price", b.Price)
+
+	where := make([]string, 0, 1)
+	where = append(where, fmt.Sprintf("book_id = $%d", param))
+	args = append(args, b.BookID)
+	param++
+
+	sqlstr := fmt.Sprintf("UPDATE public.books SET %s WHERE %s", strings.Join(setClauses, ", "), strings.Join(where, " AND "))
+	logf(sqlstr, args...)
+	if _, err := db.ExecContext(ctx, sqlstr, args...); err != nil {
 		return logerror(err)
 	}
 	return nil
