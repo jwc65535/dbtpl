@@ -739,11 +739,16 @@ func overloadedName(sqlTypes []string, proc Proc) string {
 }
 
 func convertField(ctx context.Context, tf transformFunc, f xo.Field) (Field, error) {
-	typ, zero, err := goType(ctx, f.Type)
+	typSpec := f.Type
+	hasDefault := f.Default != ""
+	if hasDefault && !typSpec.Nullable {
+		typSpec.Nullable = true
+	}
+
+	typ, zero, err := goType(ctx, typSpec)
 	if err != nil {
 		return Field{}, err
 	}
-	hasDefault := f.Default != ""
 	if hasDefault && strings.HasPrefix(typ, "pgtype.") {
 		typ = "*" + typ
 		zero = "nil"

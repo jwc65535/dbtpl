@@ -109,27 +109,25 @@ func ({{ short $t.GoName }} *{{ $t.GoName }}) Exists() bool {
 
 // Update updates the row in the database.
 {{ recv_context $t "Update" }} {
-        setClauses := make([]string, 0, {{ len $t.Fields }})
-        args := make([]any, 0, {{ len $t.Fields }})
-        param := 1
+setClauses := make([]string, 0, {{ len $t.Fields }})
+args := make([]any, 0, {{ len $t.Fields }})
+param := 1
 
-        add := func(name string, arg any) {
-                setClauses = append(setClauses, fmt.Sprintf("%s = $%d", name, param))
-                args = append(args, arg)
-                param++
-        }
-
-        {{- range $t.Fields }}
-        {{- if not .IsPrimary }}
-        {{- if .HasDefault }}
-        if {{ short $t.GoName }}.{{ .GoName }} != nil {
-                add("{{ .SQLName }}", {{ short $t.GoName }}.{{ .GoName }})
-        }
-        {{- else }}
-        add("{{ .SQLName }}", {{ short $t.GoName }}.{{ .GoName }})
-        {{- end }}
-        {{- end }}
-        {{- end }}
+{{- range $t.Fields }}
+{{- if not .IsPrimary }}
+{{- if .HasDefault }}
+if {{ short $t.GoName }}.{{ .GoName }} != nil {
+setClauses = append(setClauses, fmt.Sprintf("{{ .SQLName }} = $%d", param))
+args = append(args, {{ short $t.GoName }}.{{ .GoName }})
+param++
+}
+{{- else }}
+setClauses = append(setClauses, fmt.Sprintf("{{ .SQLName }} = $%d", param))
+args = append(args, {{ short $t.GoName }}.{{ .GoName }})
+param++
+{{- end }}
+{{- end }}
+{{- end }}
 
         where := make([]string, 0, {{ len $t.PrimaryKeys }})
         {{- range $t.PrimaryKeys }}
