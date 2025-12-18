@@ -77,7 +77,7 @@ func TestAuthorCRUD(t *testing.T) {
 		FirstName: "Jane",
 		LastName:  "Doe",
 		Bio:       pgtype.Text{String: "bio", Valid: true},
-		CreatedAt: pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true},
+		CreatedAt: &pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true},
 	}
 	adapter := connAdapter{testDB}
 	if err := author.Insert(ctx, adapter); err != nil {
@@ -128,7 +128,7 @@ func TestAuthorTransaction(t *testing.T) {
 	}
 	txdb := txAdapter{tx}
 
-	temp := &Author{FirstName: "Temp", LastName: "User", CreatedAt: pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true}}
+	temp := &Author{FirstName: "Temp", LastName: "User", CreatedAt: &pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true}}
 	if err := temp.Insert(ctx, txdb); err != nil {
 		_ = tx.Rollback(ctx)
 		t.Fatalf("insert in tx: %v", err)
@@ -145,7 +145,7 @@ func TestAuthorTransaction(t *testing.T) {
 		t.Fatalf("begin tx2: %v", err)
 	}
 	txdb = txAdapter{tx}
-	final := &Author{FirstName: "Commit", LastName: "User", CreatedAt: pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true}}
+	final := &Author{FirstName: "Commit", LastName: "User", CreatedAt: &pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true}}
 	if err := final.Insert(ctx, txdb); err != nil {
 		_ = tx.Rollback(ctx)
 		t.Fatalf("insert final: %v", err)
@@ -162,7 +162,7 @@ func TestAuthorTransaction(t *testing.T) {
 func TestBookCRUD(t *testing.T) {
 	ctx := context.Background()
 	adapter := connAdapter{testDB}
-	author := &Author{FirstName: "Book", LastName: "Author", CreatedAt: pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true}}
+	author := &Author{FirstName: "Book", LastName: "Author", CreatedAt: &pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true}}
 	if err := author.Insert(ctx, adapter); err != nil {
 		t.Fatalf("create author: %v", err)
 	}
@@ -216,7 +216,7 @@ func TestBookCRUD(t *testing.T) {
 func TestBookTransaction(t *testing.T) {
 	ctx := context.Background()
 	adapter := connAdapter{testDB}
-	author := &Author{FirstName: "Txn", LastName: "Author", CreatedAt: pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true}}
+	author := &Author{FirstName: "Txn", LastName: "Author", CreatedAt: &pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true}}
 	if err := author.Insert(ctx, adapter); err != nil {
 		t.Fatalf("create author: %v", err)
 	}
@@ -299,7 +299,7 @@ func TestTagCRUD(t *testing.T) {
 func TestBookTagCRUD(t *testing.T) {
 	ctx := context.Background()
 	adapter := connAdapter{testDB}
-	author := &Author{FirstName: "Tag", LastName: "Author", CreatedAt: pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true}}
+	author := &Author{FirstName: "Tag", LastName: "Author", CreatedAt: &pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true}}
 	if err := author.Insert(ctx, adapter); err != nil {
 		t.Fatalf("create author: %v", err)
 	}
@@ -417,7 +417,7 @@ func TestCoreDataTypeCRUD(t *testing.T) {
 		TimestampVal:      time.Now().UTC(),
 		TimestamptzVal:    time.Now().UTC(),
 		IntervalVal:       pgtype.Interval{Microseconds: 1000, Valid: true},
-		UUIDVal:           pgtype.UUID{Bytes: [16]byte{1, 2, 3, 4}, Valid: true},
+		UUIDVal:           &pgtype.UUID{Bytes: [16]byte{1, 2, 3, 4}, Valid: true},
 		JsonbDataNullable: &nullableJSON,
 		JsonbData:         jsonData,
 		NullableInt:       pgtype.Int4{Int32: 9, Valid: true},

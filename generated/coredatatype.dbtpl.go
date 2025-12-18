@@ -5,6 +5,8 @@ package generated
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -28,7 +30,7 @@ type CoreDataType struct {
 	TimestampVal       time.Time        `json:"timestamp_val"`        // timestamp_val
 	TimestamptzVal     time.Time        `json:"timestamptz_val"`      // timestamptz_val
 	IntervalVal        pgtype.Interval  `json:"interval_val"`         // interval_val
-	UUIDVal            pgtype.UUID      `json:"uuid_val"`             // uuid_val
+	UUIDVal            *pgtype.UUID     `json:"uuid_val"`             // uuid_val
 	JsonbDataNullable  *json.RawMessage `json:"jsonb_data_nullable"`  // jsonb_data_nullable
 	JsonbData          json.RawMessage  `json:"jsonb_data"`           // jsonb_data
 	NullableInt        pgtype.Int4      `json:"nullable_int"`         // nullable_int
@@ -45,13 +47,44 @@ func (cdt *CoreDataType) Exists() bool {
 
 // Insert inserts the row into the database.
 func (cdt *CoreDataType) Insert(ctx context.Context, db DB) error {
-	const sqlstr = `INSERT INTO public.core_data_types (` +
-		`small_int_val, integer_val, big_int_val, numeric_val, real_val, double_precision_val, char_val, varchar_val, text_val, boolean_val, date_val, time_val, timestamp_val, timestamptz_val, interval_val, uuid_val, jsonb_data_nullable, jsonb_data, nullable_int, nullable_text, nullable_time` +
-		`) VALUES (` +
-		`$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21` +
-		`) RETURNING id`
-	logf(sqlstr, cdt.ID, cdt.SmallIntVal, cdt.IntegerVal, cdt.BigIntVal, cdt.NumericVal, cdt.RealVal, cdt.DoublePrecisionVal, cdt.CharVal, cdt.VarcharVal, cdt.TextVal, cdt.BooleanVal, cdt.DateVal, cdt.TimeVal, cdt.TimestampVal, cdt.TimestamptzVal, cdt.IntervalVal, cdt.UUIDVal, cdt.JsonbDataNullable, cdt.JsonbData, cdt.NullableInt, cdt.NullableText, cdt.NullableTime)
-	if err := db.QueryRowContext(ctx, sqlstr, cdt.SmallIntVal, cdt.IntegerVal, cdt.BigIntVal, cdt.NumericVal, cdt.RealVal, cdt.DoublePrecisionVal, cdt.CharVal, cdt.VarcharVal, cdt.TextVal, cdt.BooleanVal, cdt.DateVal, cdt.TimeVal, cdt.TimestampVal, cdt.TimestamptzVal, cdt.IntervalVal, cdt.UUIDVal, cdt.JsonbDataNullable, cdt.JsonbData, cdt.NullableInt, cdt.NullableText, cdt.NullableTime).Scan(&cdt.ID); err != nil {
+	columns := make([]string, 0, 22)
+	values := make([]string, 0, 22)
+	args := make([]any, 0, 22)
+	param := 1
+
+	add := func(name string, arg any) {
+		columns = append(columns, name)
+		values = append(values, fmt.Sprintf("$%d", param))
+		args = append(args, arg)
+		param++
+	}
+	add("small_int_val", cdt.SmallIntVal)
+	add("integer_val", cdt.IntegerVal)
+	add("big_int_val", cdt.BigIntVal)
+	add("numeric_val", cdt.NumericVal)
+	add("real_val", cdt.RealVal)
+	add("double_precision_val", cdt.DoublePrecisionVal)
+	add("char_val", cdt.CharVal)
+	add("varchar_val", cdt.VarcharVal)
+	add("text_val", cdt.TextVal)
+	add("boolean_val", cdt.BooleanVal)
+	add("date_val", cdt.DateVal)
+	add("time_val", cdt.TimeVal)
+	add("timestamp_val", cdt.TimestampVal)
+	add("timestamptz_val", cdt.TimestamptzVal)
+	add("interval_val", cdt.IntervalVal)
+	if cdt.UUIDVal != nil {
+		add("uuid_val", cdt.UUIDVal)
+	}
+	add("jsonb_data_nullable", cdt.JsonbDataNullable)
+	add("jsonb_data", cdt.JsonbData)
+	add("nullable_int", cdt.NullableInt)
+	add("nullable_text", cdt.NullableText)
+	add("nullable_time", cdt.NullableTime)
+
+	sqlstr := fmt.Sprintf("INSERT INTO public.core_data_types (%s) VALUES (%s)", strings.Join(columns, ", "), strings.Join(values, ", "))
+	logf(sqlstr, args...)
+	if err := db.QueryRowContext(ctx, sqlstr, args...).Scan(&cdt.ID); err != nil {
 		return logerror(err)
 	}
 	cdt._exists = true
@@ -60,11 +93,47 @@ func (cdt *CoreDataType) Insert(ctx context.Context, db DB) error {
 
 // Update updates the row in the database.
 func (cdt *CoreDataType) Update(ctx context.Context, db DB) error {
-	const sqlstr = `UPDATE public.core_data_types SET ` +
-		`small_int_val = $1, integer_val = $2, big_int_val = $3, numeric_val = $4, real_val = $5, double_precision_val = $6, char_val = $7, varchar_val = $8, text_val = $9, boolean_val = $10, date_val = $11, time_val = $12, timestamp_val = $13, timestamptz_val = $14, interval_val = $15, uuid_val = $16, jsonb_data_nullable = $17, jsonb_data = $18, nullable_int = $19, nullable_text = $20, nullable_time = $21 ` +
-		`WHERE id = $22`
-	logf(sqlstr, cdt.SmallIntVal, cdt.IntegerVal, cdt.BigIntVal, cdt.NumericVal, cdt.RealVal, cdt.DoublePrecisionVal, cdt.CharVal, cdt.VarcharVal, cdt.TextVal, cdt.BooleanVal, cdt.DateVal, cdt.TimeVal, cdt.TimestampVal, cdt.TimestamptzVal, cdt.IntervalVal, cdt.UUIDVal, cdt.JsonbDataNullable, cdt.JsonbData, cdt.NullableInt, cdt.NullableText, cdt.NullableTime, cdt.ID)
-	if _, err := db.ExecContext(ctx, sqlstr, cdt.SmallIntVal, cdt.IntegerVal, cdt.BigIntVal, cdt.NumericVal, cdt.RealVal, cdt.DoublePrecisionVal, cdt.CharVal, cdt.VarcharVal, cdt.TextVal, cdt.BooleanVal, cdt.DateVal, cdt.TimeVal, cdt.TimestampVal, cdt.TimestamptzVal, cdt.IntervalVal, cdt.UUIDVal, cdt.JsonbDataNullable, cdt.JsonbData, cdt.NullableInt, cdt.NullableText, cdt.NullableTime, cdt.ID); err != nil {
+	setClauses := make([]string, 0, 22)
+	args := make([]any, 0, 22)
+	param := 1
+
+	add := func(name string, arg any) {
+		setClauses = append(setClauses, fmt.Sprintf("%s = $%d", name, param))
+		args = append(args, arg)
+		param++
+	}
+	add("small_int_val", cdt.SmallIntVal)
+	add("integer_val", cdt.IntegerVal)
+	add("big_int_val", cdt.BigIntVal)
+	add("numeric_val", cdt.NumericVal)
+	add("real_val", cdt.RealVal)
+	add("double_precision_val", cdt.DoublePrecisionVal)
+	add("char_val", cdt.CharVal)
+	add("varchar_val", cdt.VarcharVal)
+	add("text_val", cdt.TextVal)
+	add("boolean_val", cdt.BooleanVal)
+	add("date_val", cdt.DateVal)
+	add("time_val", cdt.TimeVal)
+	add("timestamp_val", cdt.TimestampVal)
+	add("timestamptz_val", cdt.TimestamptzVal)
+	add("interval_val", cdt.IntervalVal)
+	if cdt.UUIDVal != nil {
+		add("uuid_val", cdt.UUIDVal)
+	}
+	add("jsonb_data_nullable", cdt.JsonbDataNullable)
+	add("jsonb_data", cdt.JsonbData)
+	add("nullable_int", cdt.NullableInt)
+	add("nullable_text", cdt.NullableText)
+	add("nullable_time", cdt.NullableTime)
+
+	where := make([]string, 0, 1)
+	where = append(where, fmt.Sprintf("id = $%d", param))
+	args = append(args, cdt.ID)
+	param++
+
+	sqlstr := fmt.Sprintf("UPDATE public.core_data_types SET %s WHERE %s", strings.Join(setClauses, ", "), strings.Join(where, " AND "))
+	logf(sqlstr, args...)
+	if _, err := db.ExecContext(ctx, sqlstr, args...); err != nil {
 		return logerror(err)
 	}
 	return nil
