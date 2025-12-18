@@ -345,7 +345,7 @@ func TestAdvancedFeatureCRUD(t *testing.T) {
 	feature := &AdvancedFeature{
 		IntArray:      []int{1, 2, 3},
 		TextArray:     []string{"a", "b"},
-		ProcessStatus: "PENDING",
+		ProcessStatus: &pgtype.Text{String: "PENDING", Valid: true},
 		PointLocation: pgtype.Point{P: pgtype.Vec2{X: 1.1, Y: 2.2}, Valid: true},
 		IntRange: pgtype.Range[pgtype.Int4]{
 			Lower:     pgtype.Int4{Int32: 1, Valid: true},
@@ -366,17 +366,17 @@ func TestAdvancedFeatureCRUD(t *testing.T) {
 	if err != nil {
 		t.Fatalf("fetch feature: %v", err)
 	}
-	if fetched.ProcessStatus != feature.ProcessStatus || !bytes.Equal(fetched.FileData, feature.FileData) {
+	if fetched.ProcessStatus == nil || fetched.ProcessStatus.String != feature.ProcessStatus.String || !bytes.Equal(fetched.FileData, feature.FileData) {
 		t.Fatalf("feature mismatch: %#v", fetched)
 	}
 
-	fetched.ProcessStatus = "COMPLETED"
+	fetched.ProcessStatus = &pgtype.Text{String: "COMPLETED", Valid: true}
 	fetched.EmailAddress = pgtype.Text{Valid: false}
 	if err := fetched.Update(ctx, adapter); err != nil {
 		t.Fatalf("update feature: %v", err)
 	}
 	updated, _ := AdvancedFeatureByFeatureID(ctx, adapter, feature.FeatureID)
-	if updated.ProcessStatus != "COMPLETED" || updated.EmailAddress.Valid {
+	if updated.ProcessStatus == nil || updated.ProcessStatus.String != "COMPLETED" || updated.EmailAddress.Valid {
 		t.Fatalf("update not persisted: %#v", updated)
 	}
 
@@ -422,7 +422,7 @@ func TestCoreDataTypeCRUD(t *testing.T) {
 		JsonbData:         jsonData,
 		NullableInt:       pgtype.Int4{Int32: 9, Valid: true},
 		NullableText:      pgtype.Text{String: "maybe", Valid: true},
-                NullableTime:      pgtype.Time{Valid: false},
+		NullableTime:      pgtype.Time{Valid: false},
 	}
 	if err := record.Insert(ctx, adapter); err != nil {
 		t.Fatalf("insert coredata: %v", err)
