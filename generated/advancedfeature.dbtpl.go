@@ -16,7 +16,7 @@ type AdvancedFeature struct {
 	FeatureID     int                       `json:"feature_id"`     // feature_id
 	IntArray      []int                     `json:"int_array"`      // int_array
 	TextArray     []string                  `json:"text_array"`     // text_array
-	ProcessStatus string                    `json:"process_status"` // process_status
+	ProcessStatus *pgtype.Text              `json:"process_status"` // process_status
 	PointLocation pgtype.Point              `json:"point_location"` // point_location
 	IntRange      pgtype.Range[pgtype.Int4] `json:"int_range"`      // int_range
 	FileData      []byte                    `json:"file_data"`      // file_data
@@ -32,9 +32,9 @@ func (af *AdvancedFeature) Exists() bool {
 
 // Insert inserts the row into the database.
 func (af *AdvancedFeature) Insert(ctx context.Context, db DB) error {
-	columns := make([]string, 0, 8)
-	values := make([]string, 0, 8)
-	args := make([]any, 0, 8)
+	columns := make([]string, 0, 7)
+	values := make([]string, 0, 7)
+	args := make([]any, 0, 7)
 	param := 1
 
 	add := func(name string, arg any) {
@@ -43,6 +43,7 @@ func (af *AdvancedFeature) Insert(ctx context.Context, db DB) error {
 		args = append(args, arg)
 		param++
 	}
+
 	add("int_array", af.IntArray)
 	add("text_array", af.TextArray)
 	if af.ProcessStatus != nil {
@@ -64,31 +65,44 @@ func (af *AdvancedFeature) Insert(ctx context.Context, db DB) error {
 
 // Update updates the row in the database.
 func (af *AdvancedFeature) Update(ctx context.Context, db DB) error {
-	setClauses := make([]string, 0, 8)
-	args := make([]any, 0, 8)
+	setClauses := make([]string, 0, 7)
+	args := make([]any, 0, 7)
 	param := 1
 
-	add := func(name string, arg any) {
-		setClauses = append(setClauses, fmt.Sprintf("%s = $%d", name, param))
-		args = append(args, arg)
-		param++
-	}
-	add("int_array", af.IntArray)
-	add("text_array", af.TextArray)
-	if af.ProcessStatus != nil {
-		add("process_status", af.ProcessStatus)
-	}
-	add("point_location", af.PointLocation)
-	add("int_range", af.IntRange)
-	add("file_data", af.FileData)
-	add("email_address", af.EmailAddress)
-
-	where := make([]string, 0, 1)
-	where = append(where, fmt.Sprintf("feature_id = $%d", param))
-	args = append(args, af.FeatureID)
+	setClauses = append(setClauses, fmt.Sprintf("int_array = $%d", param))
+	args = append(args, af.IntArray)
 	param++
 
-	sqlstr := fmt.Sprintf("UPDATE public.advanced_features SET %s WHERE %s", strings.Join(setClauses, ", "), strings.Join(where, " AND "))
+	setClauses = append(setClauses, fmt.Sprintf("text_array = $%d", param))
+	args = append(args, af.TextArray)
+	param++
+
+	if af.ProcessStatus != nil {
+		setClauses = append(setClauses, fmt.Sprintf("process_status = $%d", param))
+		args = append(args, af.ProcessStatus)
+		param++
+	}
+
+	setClauses = append(setClauses, fmt.Sprintf("point_location = $%d", param))
+	args = append(args, af.PointLocation)
+	param++
+
+	setClauses = append(setClauses, fmt.Sprintf("int_range = $%d", param))
+	args = append(args, af.IntRange)
+	param++
+
+	setClauses = append(setClauses, fmt.Sprintf("file_data = $%d", param))
+	args = append(args, af.FileData)
+	param++
+
+	setClauses = append(setClauses, fmt.Sprintf("email_address = $%d", param))
+	args = append(args, af.EmailAddress)
+	param++
+
+	where := fmt.Sprintf("feature_id = $%d", param)
+	args = append(args, af.FeatureID)
+
+	sqlstr := fmt.Sprintf("UPDATE public.advanced_features SET %s WHERE %s", strings.Join(setClauses, ", "), where)
 	logf(sqlstr, args...)
 	if _, err := db.ExecContext(ctx, sqlstr, args...); err != nil {
 		return logerror(err)
