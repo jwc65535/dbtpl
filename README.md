@@ -193,7 +193,7 @@ Commands:
     Generate code for a database custom query from a template.
 
     -s, --schema=<name>            database schema name
-    -t, --template=go              template type (createdb, dot, go, json, yaml;
+    -t, --template=go              template type (createdb, dot, go, json, yaml, pgx;
                                    default: go)
     -f, --suffix=<ext>             file extension suffix for generated files
                                    (otherwise set by template type)
@@ -247,7 +247,7 @@ Commands:
     Generate code for a database schema from a template.
 
     -s, --schema=<name>            database schema name
-    -t, --template=go              template type (createdb, dot, go, json, yaml;
+    -t, --template=go              template type (createdb, dot, go, json, yaml, pgx;
                                    default: go)
     -f, --suffix=<ext>             file extension suffix for generated files
                                    (otherwise set by template type)
@@ -309,11 +309,28 @@ Commands:
   dump [<flags>] <out>
     Dump internal templates to path.
 
-    -t, --template=go   template type (createdb, dot, go, json, yaml; default:
+    -t, --template=go   template type (createdb, dot, go, json, yaml, pgx; default:
                         go)
     -f, --suffix=<ext>  file extension suffix for generated files (otherwise set
                         by template type)
 ```
+
+## Template Types
+
+- `createdb`: SQL DDL generation
+- `dot`: GraphViz DOT output
+- `go`: Standard Go with `database/sql`
+- `json`: JSON schema output
+- `yaml`: YAML schema output
+- `pgx`: Go with pgx/v5 (PostgreSQL-specific)
+
+### pgx Template Type Mapping
+
+The `pgx` template follows these rules when mapping PostgreSQL columns to Go types:
+
+1. **Columns with DEFAULT**: use pointer `pgtype.*` types; nil values omit fields from INSERT/UPDATE so the database default applies.
+2. **NOT NULL without DEFAULT**: use non-pointer native Go types (always required).
+3. **Nullable without DEFAULT**: use pointer `pgtype.*` types (NULL-able).
 
 ## About Base Templates
 
