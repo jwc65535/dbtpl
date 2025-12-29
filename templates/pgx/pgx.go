@@ -1064,6 +1064,22 @@ func (f *Funcs) FuncMap() template.FuncMap {
 		"has_default": func(field Field) bool {
 			return field.Default != "" && !field.IsSequence
 		},
+		"has_sequence": func(t Table) bool {
+			for _, field := range t.Fields {
+				if field.IsSequence {
+					return true
+				}
+			}
+			return false
+		},
+		"seq_field": func(t Table) Field {
+			for _, field := range t.Fields {
+				if field.IsSequence {
+					return field
+				}
+			}
+			return Field{}
+		},
 		"colname": f.colname,
 		"short":        f.short,
 		"inc":          f.inc,
